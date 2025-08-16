@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Clock - Decode Time Daily</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(25px);
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            padding: 2rem;
+            width: 90vw;
+            max-width: 1200px;
+            min-height: 80vh;
+            box-shadow: 
+                0 8px 32px 0 rgba(31, 38, 135, 0.37),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            animation: containerFloat 6s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes containerFloat {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-10px) scale(1.01); }
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+            animation: shimmer 3s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+            text-shadow: 
+                0 0 20px rgba(255, 255, 255, 0.5),
+                0 2px 10px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(45deg, #fff, #f0f0f0, #fff);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textShine 3s ease-in-out infinite;
+        }
+
+        @keyframes textShine {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+
+        .clock-modes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .clock-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .clock-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .clock-card:hover {
+            transform: translateY(-8px) rotateX(5deg) rotateY(5deg);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.25),
+                0 8px 16px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .clock-card:hover::before {
+            left: 100%;
+        }
+
+        .clock-card.active {
+            border: 2px solid rgba(76, 175, 80, 0.8);
+            background: rgba(76, 175, 80, 0.15);
+            box-shadow: 
+                0 0 30px rgba(76, 175, 80, 0.3),
+                0 15px 35px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: activeGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes activeGlow {
+            from { box-shadow: 0 0 20px rgba(76, 175, 80, 0.3), 0 15px 35px rgba(0, 0, 0, 0.2); }
+            to { box-shadow: 0 0 40px rgba(76, 175, 80, 0.5), 0 15px 35px rgba(0, 0, 0, 0.2); }
+        }
+
+        .clock-title {
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .difficulty {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-left: auto;
+        }
+
+        .difficulty.easy { 
+            background: linear-gradient(135deg, #4CAF50, #8BC34A); 
+            color: white; 
+            animation: pulseGreen 2s ease-in-out infinite;
+        }
+        .difficulty.medium { 
+            background: linear-gradient(135deg, #FF9800, #FFC107); 
+            color: white; 
+            animation: pulseOrange 2s ease-in-out infinite;
+        }
+        .difficulty.hard { 
+            background: linear-gradient(135deg, #F44336, #E91E63); 
+            color: white; 
+            animation: pulseRed 2s ease-in-out infinite;
+        }
+        .difficulty.expert { 
+            background: linear-gradient(135deg, #9C27B0, #673AB7); 
+            color: white; 
+            animation: pulsePurple 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseGreen {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(76, 175, 80, 0); }
+        }
+
+        @keyframes pulseOrange {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(255, 152, 0, 0); }
+        }
+
+        @keyframes pulseRed {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(244, 67, 54, 0); }
+        }
+
+        @keyframes pulsePurple {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(156, 39, 176, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(156, 39, 176, 0); }
+        }
+
+        .clock-display {
+            background: linear-gradient(145deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .clock-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+        }
+
+        .clock-display::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        }
+
+        .binary-display {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .binary-row {
+            display: contents;
+        }
+
+        .binary-bit {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-size: 0.9rem;
+            position: relative;
+        }
+
+        .binary-bit.on {
+            background: linear-gradient(145deg, #00ff88, #00cc66);
+            color: #000;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 136, 0.6),
+                0 0 40px rgba(0, 255, 136, 0.3),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+            animation: bitPulse 1.5s ease-in-out infinite;
+        }
+
+        .binary-bit.off {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            color: rgba(255, 255, 255, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @keyframes bitPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), 0 0 40px rgba(0, 255, 136, 0.3); }
+            50% { box-shadow: 0 0 30px rgba(0, 255, 136, 0.8), 0 0 60px rgba(0, 255, 136, 0.5); }
+        }
+
+        .emoji-display {
+            font-size: 3.5rem;
+            letter-spacing: 0.8rem;
+            animation: emojiFloat 3s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        @keyframes emojiFloat {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            33% { transform: translateY(-10px) scale(1.05); }
+            66% { transform: translateY(5px) scale(0.98); }
+        }
+
+        .color-display {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.5rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .color-block {
+            width: 55px;
+            height: 55px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-block::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.2), transparent, rgba(255, 255, 255, 0.2));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .color-block:hover {
+            transform: scale(1.15) rotate(5deg);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .color-block:hover::before {
+            opacity: 1;
+        }
+
+        .matrix-display {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 2px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .matrix-cell {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #00ff88;
+            transition: all 0.2s ease;
+        }
+
+        .matrix-cell.active {
+            background: rgba(0, 255, 136, 0.8);
+            color: #000;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.9rem 2.5rem;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50, #45a049, #66BB6A);
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 25px rgba(76, 175, 80, 0.4);
+            background: linear-gradient(135deg, #66BB6A, #4CAF50, #45a049);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px) scale(1.05);
+            background: rgba(255, 255, 255, 0.25);
+            border-color: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 12px 25px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.08));
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 1.2rem;
+            text-align: center;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #4CAF50, #2196F3, #9C27B0, #FF9800);
+            background-size: 300% 300%;
+            animation: statGradient 3s ease infinite;
+        }
+
+        @keyframes statGradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.12));
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #4CAF50, #2196F3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: valueShine 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes valueShine {
+            from { filter: brightness(1); }
+            to { filter: brightness(1.2); }
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        .hint-section {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.08));
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            color: white;
+            display: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hint-section::before {
+            content: '💡';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 2rem;
+            opacity: 0.3;
+            animation: hintGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes hintGlow {
+            from { opacity: 0.3; transform: rotate(0deg); }
+            to { opacity: 0.7; transform: rotate(10deg); }
+        }
+
+        .hint-section.show {
+            display: block;
+            animation: slideInBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes slideInBounce {
+            0% { opacity: 0; transform: translateY(-30px) scale(0.8); }
+            60% { transform: translateY(5px) scale(1.05); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .hint-section h3 {
+            margin-bottom: 1rem;
+            color: #FFC107;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            margin: 1rem 0;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: progressShimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes progressShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A, #CDDC39);
+            background-size: 200% 200%;
+            width: 0%;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: progressGradient 3s ease infinite;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @keyframes progressGradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: fillGlow 1.5s ease-in-out infinite;
+        }
+
+        @keyframes fillGlow {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+
+        .achievement {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #4CAF50, #45a049, #66BB6A);
+            color: white;
+            padding: 1.2rem 1.8rem;
+            border-radius: 15px;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(76, 175, 80, 0.4);
+            transform: translateX(400px);
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: achievementPulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes achievementPulse {
+            from { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(76, 175, 80, 0.4); }
+            to { box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(76, 175, 80, 0.6); }
+        }
+
+        .achievement.show {
+            transform: translateX(0) scale(1.05);
+            animation: achievementBounce 0.8s ease-out;
+        }
+
+        @keyframes achievementBounce {
+            0% { transform: translateX(400px) scale(0.8); }
+            60% { transform: translateX(-10px) scale(1.1); }
+            80% { transform: translateX(5px) scale(1.05); }
+            100% { transform: translateX(0) scale(1.05); }
+        }
+
+        .floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.2));
+            border-radius: 50%;
+            animation: float 8s infinite ease-in-out;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes float {
+            0% { 
+                transform: translateY(100vh) translateX(0px) rotate(0deg) scale(0); 
+                opacity: 0; 
+            }
+            10% { 
+                opacity: 1; 
+                transform: translateY(90vh) translateX(10px) rotate(36deg) scale(1);
+            }
+            90% { 
+                opacity: 1; 
+                transform: translateY(-10vh) translateX(-10px) rotate(324deg) scale(1);
+            }
+            100% { 
+                transform: translateY(-20vh) translateX(0px) rotate(360deg) scale(0); 
+                opacity: 0; 
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+                margin: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .clock-modes {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+        .achievement {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #4CAF50, #45a049, #66BB6A);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    font-size: 1rem;
+    font-weight: bold;
+    z-index: 1000;
+    opacity: 0;
+    transform: translateX(120%);
+    transition: all 0.4s ease;
+}
+
+.achievement.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.achievement::before {
+    content: "🏆";
+    margin-right: 8px;
+    font-size: 1.2rem;
+}
+
+.achievement.success {
+    background: linear-gradient(135deg, #4CAF50, #45a049, #66BB6A);
+}
+
+.achievement.warning {
+    background: linear-gradient(135deg, #FFC107, #FFB300, #FF9800);
+}
+
+.achievement.error {
+    background: linear-gradient(135deg, #F44336, #E53935, #D32F2F);
+}
+
+    </style>
+</head>
+<body>
+    <div class="floating-particles"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🧩 Puzzle Clock</h1>
+            <p>Decode time in cryptic formats - Challenge your mind daily!</p>
+        </div>
+
+        <div class="clock-modes">
+            <div class="clock-card active" data-mode="binary">
+                <div class="clock-title">
+                    🔢 Binary Clock
+                    <span class="difficulty medium">Medium</span>
+                </div>
+                <div class="clock-display">
+                    <div class="binary-display" id="binaryDisplay"></div>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Each column represents hours/minutes/seconds in binary format</p>
+            </div>
+
+            <div class="clock-card" data-mode="emoji">
+                <div class="clock-title">
+                    😀 Emoji Clock
+                    <span class="difficulty easy">Easy</span>
+                </div>
+                <div class="clock-display">
+                    <div class="emoji-display" id="emojiDisplay">🕐⏰🌅</div>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Decode time through emoji patterns and symbols</p>
+            </div>
+
+            <div class="clock-card" data-mode="color">
+                <div class="clock-title">
+                    🎨 Color Clock
+                    <span class="difficulty hard">Hard</span>
+                </div>
+                <div class="clock-display">
+                    <div class="color-display" id="colorDisplay"></div>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Each color represents different time values</p>
+            </div>
+
+            <div class="clock-card" data-mode="matrix">
+                <div class="clock-title">
+                    🔋 Matrix Clock
+                    <span class="difficulty expert">Expert</span>
+                </div>
+                <div class="clock-display">
+                    <div class="matrix-display" id="matrixDisplay"></div>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Decode the matrix pattern to reveal the time</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="toggleHints()">💡 Show Hints</button>
+            <button class="btn btn-secondary" onclick="switchMode()">🔄 Switch Mode</button>
+            <button class="btn btn-secondary" onclick="togglePause()">⏸️ Pause</button>
+            <button class="btn btn-secondary" onclick="resetStats()">📊 Reset Stats</button>
+        </div>
+
+        <div class="hint-section" id="hintSection">
+            <h3>🔍 Decoding Hints:</h3>
+            <div id="hintContent"></div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalDecodes">0</div>
+                <div class="stat-label">Total Decodes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="currentStreak">0</div>
+                <div class="stat-label">Current Streak</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="accuracy">100%</div>
+                <div class="stat-label">Accuracy Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="timeSpent">0m</div>
+                <div class="stat-label">Time Spent</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="achievement" id="achievement">
+        <div id="achievementText">🏆 Achievement Unlocked!</div>
+    </div>
+
+    <script>
+        class PuzzleClock {
+            constructor() {
+                this.currentMode = 'binary';
+                this.isPaused = false;
+                this.startTime = Date.now();
+                this.stats = this.loadStats();
+                this.achievements = [];
+                
+                this.colorMap = {
+                    0: '#FF6B6B', 1: '#4ECDC4', 2: '#45B7D1', 3: '#96CEB4',
+                    4: '#FFEAA7', 5: '#DDA0DD', 6: '#98D8C8', 7: '#F7DC6F',
+                    8: '#BB8FCE', 9: '#85C1E9'
+                };
+                
+                this.emojiHours = ['🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚','🕛'];
+                this.emojiMinutes = ['⭐','🌟','✨','💫','🌠','⚡','🔥','💎','🎯','🎨'];
+                
+                this.init();
+                this.createParticles();
+                this.updateLoop();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.updateStats();
+                this.updateClock();
+            }
+
+            setupEventListeners() {
+                document.querySelectorAll('.clock-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const mode = card.dataset.mode;
+                        this.switchToMode(mode);
+                    });
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    switch(e.key) {
+                        case 'h': case 'H': this.toggleHints(); break;
+                        case 's': case 'S': this.switchMode(); break;
+                        case ' ': e.preventDefault(); this.togglePause(); break;
+                        case 'r': case 'R': this.resetStats(); break;
+                    }
+                });
+            }
+
+            createParticles() {
+                const container = document.querySelector('.floating-particles');
+                for (let i = 0; i < 20; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 6 + 's';
+                    particle.style.animationDuration = (3 + Math.random() * 3) + 's';
+                    container.appendChild(particle);
+                }
+            }
+
+            updateLoop() {
+                if (!this.isPaused) {
+                    this.updateClock();
+                    this.updateProgress();
+                    this.checkAchievements();
+                }
+                
+                // Update time spent
+                const timeSpent = Math.floor((Date.now() - this.startTime) / 60000);
+                document.getElementById('timeSpent').textContent = timeSpent + 'm';
+                
+                requestAnimationFrame(() => this.updateLoop());
+            }
+
+            updateClock() {
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+
+                switch(this.currentMode) {
+                    case 'binary':
+                        this.updateBinaryClock(hours, minutes, seconds);
+                        break;
+                    case 'emoji':
+                        this.updateEmojiClock(hours, minutes, seconds);
+                        break;
+                    case 'color':
+                        this.updateColorClock(hours, minutes, seconds);
+                        break;
+                    case 'matrix':
+                        this.updateMatrixClock(hours, minutes, seconds);
+                        break;
+                }
+            }
+
+            updateBinaryClock(hours, minutes, seconds) {
+                const display = document.getElementById('binaryDisplay');
+                display.innerHTML = '';
+                
+                const values = [
+                    Math.floor(hours / 10), hours % 10,
+                    Math.floor(minutes / 10), minutes % 10,
+                    Math.floor(seconds / 10), seconds % 10
+                ];
+                
+                const labels = ['H', 'h', 'M', 'm', 'S', 's'];
+                
+                for (let row = 0; row < 4; row++) {
+                    for (let col = 0; col < 6; col++) {
+                        const bit = document.createElement('div');
+                        const isOn = (values[col] >> (3 - row)) & 1;
+                        bit.className = `binary-bit ${isOn ? 'on' : 'off'}`;
+                        
+                        if (row === 0) {
+                            bit.textContent = labels[col];
+                            bit.style.fontSize = '0.7rem';
+                            bit.style.background = 'rgba(255,255,255,0.2)';
+                        } else {
+                            bit.textContent = isOn ? '1' : '0';
+                        }
+                        
+                        display.appendChild(bit);
+                    }
+                }
+            }
+
+            updateEmojiClock(hours, minutes, seconds) {
+                const display = document.getElementById('emojiDisplay');
+                const hourEmoji = this.emojiHours[hours % 12];
+                const minuteEmoji = this.emojiMinutes[Math.floor(minutes / 6)];
+                const secondEmoji = seconds % 2 === 0 ? '⚡' : '💫';
+                
+                display.textContent = `${hourEmoji} ${minuteEmoji} ${secondEmoji}`;
+            }
+
+            updateColorClock(hours, minutes, seconds) {
+                const display = document.getElementById('colorDisplay');
+                display.innerHTML = '';
+                
+                const timeString = `${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}${seconds.toString().padStart(2, '0')}`;
+                
+                for (let i = 0; i < timeString.length; i++) {
+                    const block = document.createElement('div');
+                    block.className = 'color-block';
+                    block.style.backgroundColor = this.colorMap[parseInt(timeString[i])];
+                    block.title = `Digit: ${timeString[i]}`;
+                    display.appendChild(block);
+                }
+            }
+
+            updateMatrixClock(hours, minutes, seconds) {
+                const display = document.getElementById('matrixDisplay');
+                const timeValue = hours * 3600 + minutes * 60 + seconds;
+                
+                if (!display.hasChildNodes()) {
+                    for (let i = 0; i < 50; i++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'matrix-cell';
+                        cell.textContent = Math.random() > 0.5 ? '1' : '0';
+                        display.appendChild(cell);
+                    }
+                }
+                
+                // Update pattern based on time
+                const cells = display.children;
+                for (let i = 0; i < cells.length; i++) {
+                    const isActive = (timeValue + i) % 7 === 0;
+                    cells[i].classList.toggle('active', isActive);
+                    cells[i].textContent = Math.random() > 0.3 ? '1' : '0';
+                }
+            }
+
+            switchToMode(mode) {
+                this.currentMode = mode;
+                document.querySelectorAll('.clock-card').forEach(card => {
+                    card.classList.toggle('active', card.dataset.mode === mode);
+                });
+                this.stats.totalDecodes++;
+                this.updateStats();
+                this.updateHints();
+            }
+
+            updateHints() {
+                const hints = {
+                    binary: `
+                        <p><strong>Binary Clock Guide:</strong></p>
+                        <p>• Each column represents a digit (HH:MM:SS)</p>
+                        <p>• Read each column from top to bottom as binary (8-4-2-1)</p>
+                        <p>• Example: 1010 = 8+2 = 10</p>
+                    `,
+                    emoji: `
+                        <p><strong>Emoji Clock Guide:</strong></p>
+                        <p>• First emoji: Hour (🕐=1, 🕑=2, etc.)</p>
+                        <p>• Second emoji: 10-minute intervals (⭐=0-9, 🌟=10-19, etc.)</p>
+                        <p>• Third emoji: Alternates every second (⚡/💫)</p>
+                    `,
+                    color: `
+                        <p><strong>Color Clock Guide:</strong></p>
+                        <p>• Each color block represents a digit (0-9)</p>
+                        <p>• Red=#FF6B6B=0, Teal=#4ECDC4=1, Blue=#45B7D1=2</p>
+                        <p>• Read left to right: HH MM SS</p>
+                    `,
+                    matrix: `
+                        <p><strong>Matrix Clock Guide:</strong></p>
+                        <p>• Active cells follow a time-based pattern</p>
+                        <p>• Count active cells in each row</p>
+                        <p>• Pattern changes every 7 seconds</p>
+                    `
+                };
+                
+                document.getElementById('hintContent').innerHTML = hints[this.currentMode];
+            }
+
+            updateProgress() {
+                const now = new Date();
+                const secondsInDay = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                const progress = (secondsInDay / 86400) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+            }
+
+            checkAchievements() {
+                const achievements = [
+                    { id: 'first_decode', condition: () => this.stats.totalDecodes >= 1, text: 'First Steps!' },
+                    { id: 'time_master', condition: () => this.stats.totalDecodes >= 50, text: 'Time Master!' },
+                    { id: 'streak_5', condition: () => this.stats.currentStreak >= 5, text: '5 Mode Streak!' },
+                    { id: 'marathon', condition: () => (Date.now() - this.startTime) >= 300000, text: '5 Minute Marathon!' }
+                ];
+                
+                achievements.forEach(achievement => {
+                    if (!this.achievements.includes(achievement.id) && achievement.condition()) {
+                        this.showAchievement(achievement.text);
+                        this.achievements.push(achievement.id);
+                    }
+                });
+            }
+
+            showAchievement(text) {
+                const achievement = document.getElementById('achievement');
+                document.getElementById('achievementText').textContent = `🏆 ${text}`;
+                achievement.classList.add('show');
+                
+                setTimeout(() => {
+                    achievement.classList.remove('show');
+                }, 3000);
+            }
+
+            toggleHints() {
+                const hintSection = document.getElementById('hintSection');
+                hintSection.classList.toggle('show');
+                this.updateHints();
+            }
+
+            switchMode() {
+                const modes = ['binary', 'emoji', 'color', 'matrix'];
+                const currentIndex = modes.indexOf(this.currentMode);
+                const nextIndex = (currentIndex + 1) % modes.length;
+                this.switchToMode(modes[nextIndex]);
+                this.stats.currentStreak++;
+                this.updateStats();
+            }
+
+            togglePause() {
+                this.isPaused = !this.isPaused;
+                const btn = document.querySelector('[onclick="togglePause()"]');
+                btn.textContent = this.isPaused ? '▶️ Resume' : '⏸️ Pause';
+            }
+
+            updateStats() {
+                document.getElementById('totalDecodes').textContent = this.stats.totalDecodes;
+                document.getElementById('currentStreak').textContent = this.stats.currentStreak;
+                document.getElementById('accuracy').textContent = '100%';
+                this.saveStats();
+            }
+
+            resetStats() {
+                if (confirm('Reset all statistics? This cannot be undone.')) {
+                    this.stats = { totalDecodes: 0, currentStreak: 0, accuracy: 100 };
+                    this.achievements = [];
+                    this.updateStats();
+                    this.showAchievement('Stats Reset!');
+                }
+            }
+
+            loadStats() {
+                const saved = JSON.parse(localStorage.getItem('puzzleClockStats') || '{}');
+                return {
+                    totalDecodes: saved.totalDecodes || 0,
+                    currentStreak: saved.currentStreak || 0,
+                    accuracy: saved.accuracy || 100
+                };
+            }
+
+            saveStats() {
+                localStorage.setItem('puzzleClockStats', JSON.stringify(this.stats));
+            }
+        }
+
+        // Global functions for button handlers
+        let puzzleClock;
+
+        function toggleHints() {
+            puzzleClock.toggleHints();
+        }
+
+        function switchMode() {
+            puzzleClock.switchMode();
+        }
+
+        function togglePause() {
+            puzzleClock.togglePause();
+        }
+
+        function resetStats() {
+            puzzleClock.resetStats();
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            puzzleClock = new PuzzleClock();
+        });
+    </script>
+</body>
+</html>
