@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Clock - Decode Time Daily</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 2rem;
+            width: 90vw;
+            max-width: 1200px;
+            min-height: 80vh;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1rem;
+        }
+
+        .clock-modes {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .clock-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .clock-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .clock-card.active {
+            border: 2px solid #4CAF50;
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .clock-title {
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .difficulty {
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-left: auto;
+        }
+
+        .difficulty.easy { background: #4CAF50; color: white; }
+        .difficulty.medium { background: #FF9800; color: white; }
+        .difficulty.hard { background: #F44336; color: white; }
+        .difficulty.expert { background: #9C27B0; color: white; }
+
+        .clock-display {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', monospace;
+            position: relative;
+        }
+
+        .binary-display {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 0.5rem;
+            width: 100%;
+        }
+
+        .binary-row {
+            display: contents;
+        }
+
+        .binary-bit {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .binary-bit.on {
+            background: linear-gradient(45deg, #00ff88, #00cc66);
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.5);
+        }
+
+        .binary-bit.off {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .emoji-display {
+            font-size: 3rem;
+            letter-spacing: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .color-display {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.5rem;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .color-block {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .color-block:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .matrix-display {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 2px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .matrix-cell {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #00ff88;
+            transition: all 0.2s ease;
+        }
+
+        .matrix-cell.active {
+            background: rgba(0, 255, 136, 0.8);
+            color: #000;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            color: white;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        .hint-section {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: white;
+            display: none;
+        }
+
+        .hint-section.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transform: translateX(400px);
+            transition: transform 0.5s ease;
+            z-index: 1000;
+        }
+
+        .achievement.show {
+            transform: translateX(0);
+        }
+
+        .floating-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: float 6s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0; }
+            50% { transform: translateY(-100px) rotate(180deg); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+                margin: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .clock-modes {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-particles"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🧩 Puzzle Clock</h1>
+            <p>Decode time in cryptic formats - Challenge your mind daily!</p>
+        </div>
+
+        <div class="clock-modes">
+            <div class="clock-card active" data-mode="binary">
+                <div class="clock-title">
+                    🔢 Binary Clock
+                    <span class="difficulty medium">Medium</span>
+                </div>
+                <div class="clock-display">
+                    <div class="binary-display" id="binaryDisplay"></div>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Each column represents hours/minutes/seconds in binary format</p>
+            </div>
+
+            <div class="clock-card" data-mode="emoji">
+                <div class="clock-title">
+                    😀 Emoji Clock
+                    <span class="difficulty easy">Easy</span>
+                </div>
+                <div class="clock-display">
+                    <div class="emoji-display" id="emojiDisplay">🕐⏰🌅</div>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Decode time through emoji patterns and symbols</p>
+            </div>
+
+            <div class="clock-card" data-mode="color">
+                <div class="clock-title">
+                    🎨 Color Clock
+                    <span class="difficulty hard">Hard</span>
+                </div>
+                <div class="clock-display">
+                    <div class="color-display" id="colorDisplay"></div>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Each color represents different time values</p>
+            </div>
+
+            <div class="clock-card" data-mode="matrix">
+                <div class="clock-title">
+                    🔋 Matrix Clock
+                    <span class="difficulty expert">Expert</span>
+                </div>
+                <div class="clock-display">
+                    <div class="matrix-display" id="matrixDisplay"></div>
+                </div>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem;">Decode the matrix pattern to reveal the time</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="toggleHints()">💡 Show Hints</button>
+            <button class="btn btn-secondary" onclick="switchMode()">🔄 Switch Mode</button>
+            <button class="btn btn-secondary" onclick="togglePause()">⏸️ Pause</button>
+            <button class="btn btn-secondary" onclick="resetStats()">📊 Reset Stats</button>
+        </div>
+
+        <div class="hint-section" id="hintSection">
+            <h3>🔍 Decoding Hints:</h3>
+            <div id="hintContent"></div>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalDecodes">0</div>
+                <div class="stat-label">Total Decodes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="currentStreak">0</div>
+                <div class="stat-label">Current Streak</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="accuracy">100%</div>
+                <div class="stat-label">Accuracy Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="timeSpent">0m</div>
+                <div class="stat-label">Time Spent</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="achievement" id="achievement">
+        <div id="achievementText">🏆 Achievement Unlocked!</div>
+    </div>
+
+    <script>
+        class PuzzleClock {
+            constructor() {
+                this.currentMode = 'binary';
+                this.isPaused = false;
+                this.startTime = Date.now();
+                this.stats = this.loadStats();
+                this.achievements = [];
+                
+                this.colorMap = {
+                    0: '#FF6B6B', 1: '#4ECDC4', 2: '#45B7D1', 3: '#96CEB4',
+                    4: '#FFEAA7', 5: '#DDA0DD', 6: '#98D8C8', 7: '#F7DC6F',
+                    8: '#BB8FCE', 9: '#85C1E9'
+                };
+                
+                this.emojiHours = ['🕐','🕑','🕒','🕓','🕔','🕕','🕖','🕗','🕘','🕙','🕚','🕛'];
+                this.emojiMinutes = ['⭐','🌟','✨','💫','🌠','⚡','🔥','💎','🎯','🎨'];
+                
+                this.init();
+                this.createParticles();
+                this.updateLoop();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.updateStats();
+                this.updateClock();
+            }
+
+            setupEventListeners() {
+                document.querySelectorAll('.clock-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        const mode = card.dataset.mode;
+                        this.switchToMode(mode);
+                    });
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    switch(e.key) {
+                        case 'h': case 'H': this.toggleHints(); break;
+                        case 's': case 'S': this.switchMode(); break;
+                        case ' ': e.preventDefault(); this.togglePause(); break;
+                        case 'r': case 'R': this.resetStats(); break;
+                    }
+                });
+            }
+
+            createParticles() {
+                const container = document.querySelector('.floating-particles');
+                for (let i = 0; i < 20; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * 100 + '%';
+                    particle.style.animationDelay = Math.random() * 6 + 's';
+                    particle.style.animationDuration = (3 + Math.random() * 3) + 's';
+                    container.appendChild(particle);
+                }
+            }
+
+            updateLoop() {
+                if (!this.isPaused) {
+                    this.updateClock();
+                    this.updateProgress();
+                    this.checkAchievements();
+                }
+                
+                // Update time spent
+                const timeSpent = Math.floor((Date.now() - this.startTime) / 60000);
+                document.getElementById('timeSpent').textContent = timeSpent + 'm';
+                
+                requestAnimationFrame(() => this.updateLoop());
+            }
+
+            updateClock() {
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+
+                switch(this.currentMode) {
+                    case 'binary':
+                        this.updateBinaryClock(hours, minutes, seconds);
+                        break;
+                    case 'emoji':
+                        this.updateEmojiClock(hours, minutes, seconds);
+                        break;
+                    case 'color':
+                        this.updateColorClock(hours, minutes, seconds);
+                        break;
+                    case 'matrix':
+                        this.updateMatrixClock(hours, minutes, seconds);
+                        break;
+                }
+            }
+
+            updateBinaryClock(hours, minutes, seconds) {
+                const display = document.getElementById('binaryDisplay');
+                display.innerHTML = '';
+                
+                const values = [
+                    Math.floor(hours / 10), hours % 10,
+                    Math.floor(minutes / 10), minutes % 10,
+                    Math.floor(seconds / 10), seconds % 10
+                ];
+                
+                const labels = ['H', 'h', 'M', 'm', 'S', 's'];
+                
+                for (let row = 0; row < 4; row++) {
+                    for (let col = 0; col < 6; col++) {
+                        const bit = document.createElement('div');
+                        const isOn = (values[col] >> (3 - row)) & 1;
+                        bit.className = `binary-bit ${isOn ? 'on' : 'off'}`;
+                        
+                        if (row === 0) {
+                            bit.textContent = labels[col];
+                            bit.style.fontSize = '0.7rem';
+                            bit.style.background = 'rgba(255,255,255,0.2)';
+                        } else {
+                            bit.textContent = isOn ? '1' : '0';
+                        }
+                        
+                        display.appendChild(bit);
+                    }
+                }
+            }
+
+            updateEmojiClock(hours, minutes, seconds) {
+                const display = document.getElementById('emojiDisplay');
+                const hourEmoji = this.emojiHours[hours % 12];
+                const minuteEmoji = this.emojiMinutes[Math.floor(minutes / 6)];
+                const secondEmoji = seconds % 2 === 0 ? '⚡' : '💫';
+                
+                display.textContent = `${hourEmoji} ${minuteEmoji} ${secondEmoji}`;
+            }
+
+            updateColorClock(hours, minutes, seconds) {
+                const display = document.getElementById('colorDisplay');
+                display.innerHTML = '';
+                
+                const timeString = `${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}${seconds.toString().padStart(2, '0')}`;
+                
+                for (let i = 0; i < timeString.length; i++) {
+                    const block = document.createElement('div');
+                    block.className = 'color-block';
+                    block.style.backgroundColor = this.colorMap[parseInt(timeString[i])];
+                    block.title = `Digit: ${timeString[i]}`;
+                    display.appendChild(block);
+                }
+            }
+
+            updateMatrixClock(hours, minutes, seconds) {
+                const display = document.getElementById('matrixDisplay');
+                const timeValue = hours * 3600 + minutes * 60 + seconds;
+                
+                if (!display.hasChildNodes()) {
+                    for (let i = 0; i < 50; i++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'matrix-cell';
+                        cell.textContent = Math.random() > 0.5 ? '1' : '0';
+                        display.appendChild(cell);
+                    }
+                }
+                
+                // Update pattern based on time
+                const cells = display.children;
+                for (let i = 0; i < cells.length; i++) {
+                    const isActive = (timeValue + i) % 7 === 0;
+                    cells[i].classList.toggle('active', isActive);
+                    cells[i].textContent = Math.random() > 0.3 ? '1' : '0';
+                }
+            }
+
+            switchToMode(mode) {
+                this.currentMode = mode;
+                document.querySelectorAll('.clock-card').forEach(card => {
+                    card.classList.toggle('active', card.dataset.mode === mode);
+                });
+                this.stats.totalDecodes++;
+                this.updateStats();
+                this.updateHints();
+            }
+
+            updateHints() {
+                const hints = {
+                    binary: `
+                        <p><strong>Binary Clock Guide:</strong></p>
+                        <p>• Each column represents a digit (HH:MM:SS)</p>
+                        <p>• Read each column from top to bottom as binary (8-4-2-1)</p>
+                        <p>• Example: 1010 = 8+2 = 10</p>
+                    `,
+                    emoji: `
+                        <p><strong>Emoji Clock Guide:</strong></p>
+                        <p>• First emoji: Hour (🕐=1, 🕑=2, etc.)</p>
+                        <p>• Second emoji: 10-minute intervals (⭐=0-9, 🌟=10-19, etc.)</p>
+                        <p>• Third emoji: Alternates every second (⚡/💫)</p>
+                    `,
+                    color: `
+                        <p><strong>Color Clock Guide:</strong></p>
+                        <p>• Each color block represents a digit (0-9)</p>
+                        <p>• Red=#FF6B6B=0, Teal=#4ECDC4=1, Blue=#45B7D1=2</p>
+                        <p>• Read left to right: HH MM SS</p>
+                    `,
+                    matrix: `
+                        <p><strong>Matrix Clock Guide:</strong></p>
+                        <p>• Active cells follow a time-based pattern</p>
+                        <p>• Count active cells in each row</p>
+                        <p>• Pattern changes every 7 seconds</p>
+                    `
+                };
+                
+                document.getElementById('hintContent').innerHTML = hints[this.currentMode];
+            }
+
+            updateProgress() {
+                const now = new Date();
+                const secondsInDay = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                const progress = (secondsInDay / 86400) * 100;
+                document.getElementById('progressFill').style.width = progress + '%';
+            }
+
+            checkAchievements() {
+                const achievements = [
+                    { id: 'first_decode', condition: () => this.stats.totalDecodes >= 1, text: 'First Steps!' },
+                    { id: 'time_master', condition: () => this.stats.totalDecodes >= 50, text: 'Time Master!' },
+                    { id: 'streak_5', condition: () => this.stats.currentStreak >= 5, text: '5 Mode Streak!' },
+                    { id: 'marathon', condition: () => (Date.now() - this.startTime) >= 300000, text: '5 Minute Marathon!' }
+                ];
+                
+                achievements.forEach(achievement => {
+                    if (!this.achievements.includes(achievement.id) && achievement.condition()) {
+                        this.showAchievement(achievement.text);
+                        this.achievements.push(achievement.id);
+                    }
+                });
+            }
+
+            showAchievement(text) {
+                const achievement = document.getElementById('achievement');
+                document.getElementById('achievementText').textContent = `🏆 ${text}`;
+                achievement.classList.add('show');
+                
+                setTimeout(() => {
+                    achievement.classList.remove('show');
+                }, 3000);
+            }
+
+            toggleHints() {
+                const hintSection = document.getElementById('hintSection');
+                hintSection.classList.toggle('show');
+                this.updateHints();
+            }
+
+            switchMode() {
+                const modes = ['binary', 'emoji', 'color', 'matrix'];
+                const currentIndex = modes.indexOf(this.currentMode);
+                const nextIndex = (currentIndex + 1) % modes.length;
+                this.switchToMode(modes[nextIndex]);
+                this.stats.currentStreak++;
+                this.updateStats();
+            }
+
+            togglePause() {
+                this.isPaused = !this.isPaused;
+                const btn = document.querySelector('[onclick="togglePause()"]');
+                btn.textContent = this.isPaused ? '▶️ Resume' : '⏸️ Pause';
+            }
+
+            updateStats() {
+                document.getElementById('totalDecodes').textContent = this.stats.totalDecodes;
+                document.getElementById('currentStreak').textContent = this.stats.currentStreak;
+                document.getElementById('accuracy').textContent = '100%';
+                this.saveStats();
+            }
+
+            resetStats() {
+                if (confirm('Reset all statistics? This cannot be undone.')) {
+                    this.stats = { totalDecodes: 0, currentStreak: 0, accuracy: 100 };
+                    this.achievements = [];
+                    this.updateStats();
+                    this.showAchievement('Stats Reset!');
+                }
+            }
+
+            loadStats() {
+                const saved = JSON.parse(localStorage.getItem('puzzleClockStats') || '{}');
+                return {
+                    totalDecodes: saved.totalDecodes || 0,
+                    currentStreak: saved.currentStreak || 0,
+                    accuracy: saved.accuracy || 100
+                };
+            }
+
+            saveStats() {
+                localStorage.setItem('puzzleClockStats', JSON.stringify(this.stats));
+            }
+        }
+
+        // Global functions for button handlers
+        let puzzleClock;
+
+        function toggleHints() {
+            puzzleClock.toggleHints();
+        }
+
+        function switchMode() {
+            puzzleClock.switchMode();
+        }
+
+        function togglePause() {
+            puzzleClock.togglePause();
+        }
+
+        function resetStats() {
+            puzzleClock.resetStats();
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            puzzleClock = new PuzzleClock();
+        });
+    </script>
+</body>
+</html>
