@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Clock - Advanced Time Decoder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+            padding: 40px;
+            max-width: 1200px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 400% 100%;
+            animation: gradient 3s ease infinite;
+        }
+
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .title {
+            font-size: 2.5em;
+            font-weight: 700;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            font-weight: 400;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .clock-section {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+            position: relative;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .mode-selector {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .mode-btn {
+            padding: 12px 18px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .mode-btn.active {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .difficulty-selector select {
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            background: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .puzzle-display {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .puzzle-display::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(102, 126, 234, 0.05), transparent);
+            animation: rotate 20s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .time-display {
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            z-index: 1;
+        }
+
+        .binary-display {
+            font-size: 2em;
+            letter-spacing: 0.2em;
+            color: #2d3748;
+        }
+
+        .emoji-display {
+            font-size: 4em;
+            line-height: 1.2;
+        }
+
+        .color-display {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .color-block {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .color-block:hover {
+            transform: scale(1.1);
+        }
+
+        .stats-section {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 30px;
+        }
+
+        .stat-item {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .stat-value {
+            font-weight: 700;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .reveal-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .reveal-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 15px;
+        }
+
+        .reveal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .normal-time {
+            font-size: 2em;
+            font-weight: 700;
+            color: #2d3748;
+            margin-top: 20px;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .normal-time.show {
+            opacity: 1;
+            transform: scale(1.05);
+        }
+
+        .hint {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 20px;
+            color: #1976d2;
+            font-weight: 500;
+        }
+
+        .achievement {
+            background: linear-gradient(45deg, #4caf50, #8bc34a);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .morse-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.8em;
+            letter-spacing: 0.3em;
+            color: #2d3748;
+            line-height: 1.8;
+        }
+
+        .roman-display {
+            font-size: 2.5em;
+            color: #8b4513;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .title {
+                font-size: 2em;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .mode-selector {
+                width: 100%;
+            }
+
+            .mode-btn {
+                flex: 1;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Puzzle Clock</h1>
+            <p class="subtitle">Decode the time in cryptic formats - Challenge your mind daily</p>
+        </div>
+
+        <div class="main-content">
+            <div class="clock-section">
+                <div class="controls">
+                    <div class="mode-selector">
+                        <button class="mode-btn active" data-mode="binary">Binary</button>
+                        <button class="mode-btn" data-mode="emoji">Emoji</button>
+                        <button class="mode-btn" data-mode="color">Color</button>
+                        <button class="mode-btn" data-mode="morse">Morse</button>
+                        <button class="mode-btn" data-mode="roman">Roman</button>
+                    </div>
+                    
+                    <div class="difficulty-selector">
+                        <select id="difficulty">
+                            <option value="easy">Easy Mode</option>
+                            <option value="medium" selected>Medium Mode</option>
+                            <option value="hard">Hard Mode</option>
+                            <option value="expert">Expert Mode</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="puzzle-display" id="puzzleDisplay">
+                    <div class="time-display" id="timeDisplay"></div>
+                    <div class="hint" id="hintDisplay" style="display: none;"></div>
+                </div>
+
+                <div class="reveal-section">
+                    <button class="reveal-btn" id="revealBtn">Reveal Time</button>
+                    <button class="reveal-btn" id="hintBtn">Show Hint</button>
+                    <div class="normal-time" id="normalTime"></div>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <h3 style="margin-bottom: 20px; color: #2d3748;">Daily Stats</h3>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Streak</span>
+                    <span class="stat-value" id="streakCount">0</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Reveals Used</span>
+                    <span class="stat-value" id="revealsUsed">0</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Current Mode</span>
+                    <span class="stat-value" id="currentMode">Binary</span>
+                </div>
+                
+                <div class="stat-item">
+                    <span class="stat-label">Accuracy</span>
+                    <span class="stat-value" id="accuracy">100%</span>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <small>Daily Challenge Progress</small>
+
+                <div id="achievements"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PuzzleClock {
+            constructor() {
+                this.currentMode = 'binary';
+                this.difficulty = 'medium';
+                this.stats = this.loadStats();
+                this.achievements = [];
+                this.hints = {
+                    binary: "Each digit is represented in 4-bit binary format (HHMM)",
+                    emoji: "🕐=1, 🕑=2... Clock faces represent hours, other emojis represent minutes",
+                    color: "Colors map to digits: Red=1, Blue=2, Green=3, Yellow=4, Purple=5, Orange=6...",
+                    morse: "Morse code: Dots and dashes represent each digit (H H M M)",
+                    roman: "Roman numerals: I=1, V=5, X=10, L=50, C=100, D=500, M=1000"
+                };
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.updateClock();
+                this.updateStats();
+                setInterval(() => this.updateClock(), 1000);
+                
+                // Update progress throughout the day
+                setInterval(() => this.updateProgress(), 60000);
+            }
+
+            setupEventListeners() {
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.setMode(e.target.dataset.mode);
+                    });
+                });
+
+                document.getElementById('difficulty').addEventListener('change', (e) => {
+                    this.difficulty = e.target.value;
+                    this.updateClock();
+                });
+
+                document.getElementById('revealBtn').addEventListener('click', () => {
+                    this.revealTime();
+                });
+
+                document.getElementById('hintBtn').addEventListener('click', () => {
+                    this.showHint();
+                });
+            }
+
+            setMode(mode) {
+                this.currentMode = mode;
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+                document.getElementById('currentMode').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+                this.updateClock();
+                this.hideHint();
+            }
+
+            updateClock() {
+                const now = new Date();
+                const timeDisplay = document.getElementById('timeDisplay');
+                
+                let displayTime;
+                switch(this.currentMode) {
+                    case 'binary':
+                        displayTime = this.toBinary(now);
+                        timeDisplay.className = 'time-display binary-display';
+                        break;
+                    case 'emoji':
+                        displayTime = this.toEmoji(now);
+                        timeDisplay.className = 'time-display emoji-display';
+                        break;
+                    case 'color':
+                        displayTime = this.toColor(now);
+                        timeDisplay.className = 'time-display';
+                        break;
+                    case 'morse':
+                        displayTime = this.toMorse(now);
+                        timeDisplay.className = 'time-display morse-display';
+                        break;
+                    case 'roman':
+                        displayTime = this.toRoman(now);
+                        timeDisplay.className = 'time-display roman-display';
+                        break;
+                }
+                
+                if(this.currentMode === 'color') {
+                    timeDisplay.innerHTML = displayTime;
+                } else {
+                    timeDisplay.textContent = displayTime;
+                }
+            }
+
+            toBinary(date) {
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                
+                const h1 = Math.floor(hours / 10);
+                const h2 = hours % 10;
+                const m1 = Math.floor(minutes / 10);
+                const m2 = minutes % 10;
+                
+                if(this.difficulty === 'easy') {
+                    return `${h1.toString(2).padStart(4, '0')} ${h2.toString(2).padStart(4, '0')} : ${m1.toString(2).padStart(4, '0')} ${m2.toString(2).padStart(4, '0')}`;
+                } else if(this.difficulty === 'medium') {
+                    return `${h1.toString(2).padStart(4, '0')}${h2.toString(2).padStart(4, '0')}:${m1.toString(2).padStart(4, '0')}${m2.toString(2).padStart(4, '0')}`;
+                } else {
+                    return `${h1.toString(2).padStart(4, '0')}${h2.toString(2).padStart(4, '0')}${m1.toString(2).padStart(4, '0')}${m2.toString(2).padStart(4, '0')}`;
+                }
+            }
+
+            toEmoji(date) {
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                
+                const hourEmojis = ['🕛', '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚'];
+                const digitEmojis = ['⭕', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+                
+                const h = hours > 12 ? hours - 12 : (hours === 0 ? 12 : hours);
+                const hourEmoji = hourEmojis[h];
+                
+                const m1 = Math.floor(minutes / 10);
+                const m2 = minutes % 10;
+                
+                if(this.difficulty === 'easy') {
+                    return `${hourEmoji} : ${digitEmojis[m1]}${digitEmojis[m2]}`;
+                } else if(this.difficulty === 'hard') {
+                    // Use more cryptic emojis
+                    const crypticEmojis = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘', '🌙', '⭐'];
+                    return `${crypticEmojis[Math.floor(hours/10)]}${crypticEmojis[hours%10]} ${crypticEmojis[m1]}${crypticEmojis[m2]}`;
+                } else {
+                    return `${hourEmoji}${digitEmojis[m1]}${digitEmojis[m2]}`;
+                }
+            }
+
+            toColor(date) {
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                const seconds = date.getSeconds();
+                
+                const colors = ['#000000', '#ff4757', '#2ed573', '#ffa502', '#3742fa', '#f368e0', '#ff6348', '#7bed9f', '#70a1ff', '#5352ed'];
+                
+                const digits = this.difficulty === 'expert' 
+                    ? [Math.floor(hours/10), hours%10, Math.floor(minutes/10), minutes%10, Math.floor(seconds/10), seconds%10]
+                    : [Math.floor(hours/10), hours%10, Math.floor(minutes/10), minutes%10];
+                
+                let html = '<div class="color-display">';
+                digits.forEach(digit => {
+                    html += `<div class="color-block" style="background-color: ${colors[digit]}"></div>`;
+                });
+                html += '</div>';
+                
+                return html;
+            }
+
+            toMorse(date) {
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                
+                const morseDigits = {
+                    '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+                    '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.'
+                };
+                
+                const timeStr = `${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}`;
+                
+                if(this.difficulty === 'easy') {
+                    return timeStr.split('').map(d => morseDigits[d]).join(' / ');
+                } else {
+                    return timeStr.split('').map(d => morseDigits[d]).join(' ');
+                }
+            }
+
+            toRoman(date) {
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                
+                const toRomanNumeral = (num) => {
+                    const romanNumerals = [
+                        { value: 50, symbol: 'L' },
+                        { value: 40, symbol: 'XL' },
+                        { value: 10, symbol: 'X' },
+                        { value: 9, symbol: 'IX' },
+                        { value: 5, symbol: 'V' },
+                        { value: 4, symbol: 'IV' },
+                        { value: 1, symbol: 'I' }
+                    ];
+                    
+                    let result = '';
+                    for (let i = 0; i < romanNumerals.length; i++) {
+                        while (num >= romanNumerals[i].value) {
+                            result += romanNumerals[i].symbol;
+                            num -= romanNumerals[i].value;
+                        }
+                    }
+                    return result || 'N'; // N for zero/null
+                };
+                
+                if(this.difficulty === 'easy') {
+                    return `${toRomanNumeral(hours)} : ${toRomanNumeral(minutes)}`;
+                } else {
+                    return `${toRomanNumeral(hours)}${toRomanNumeral(minutes)}`;
+                }
+            }
+
+            revealTime() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+                const normalTimeEl = document.getElementById('normalTime');
+                
+                normalTimeEl.textContent = timeStr;
+                normalTimeEl.classList.add('show');
+                
+                this.stats.revealsUsed++;
+                this.updateStats();
+                this.saveStats();
+                
+                setTimeout(() => {
+                    normalTimeEl.classList.remove('show');
+                }, 5000);
+            }
+
+            showHint() {
+                const hintEl = document.getElementById('hintDisplay');
+                hintEl.textContent = this.hints[this.currentMode];
+                hintEl.style.display = 'block';
+            }
+
+            hideHint() {
+                document.getElementById('hintDisplay').style.display = 'none';
+            }
+
+            updateStats() {
+                document.getElementById('streakCount').textContent = this.stats.streak;
+                document.getElementById('revealsUsed').textContent = this.stats.revealsUsed;
+                document.getElementById('accuracy').textContent = `${this.stats.accuracy}%`;
+                
+                this.updateProgress();
+                this.checkAchievements();
+            }
+
+            updateProgress() {
+                const now = new Date();
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const msInDay = 24 * 60 * 60 * 1000;
+                const progress = ((now - startOfDay) / msInDay) * 100;
+                
+                document.getElementById('progressFill').style.width = `${progress}%`;
+            }
+
+            checkAchievements() {
+                const achievementsEl = document.getElementById('achievements');
+                
+                if(this.stats.streak >= 7 && !this.achievements.includes('week_streak')) {
+                    this.achievements.push('week_streak');
+                    this.showAchievement('🔥 Week Streak! 7 days of puzzle solving!');
+                }
+                
+                if(this.stats.revealsUsed === 0 && !this.achievements.includes('no_reveals')) {
+                    this.achievements.push('no_reveals');
+                    this.showAchievement('🧠 Mind Reader! No reveals used today!');
+                }
+            }
+
+            showAchievement(text) {
+                const achievementEl = document.createElement('div');
+                achievementEl.className = 'achievement';
+                achievementEl.textContent = text;
+                document.getElementById('achievements').appendChild(achievementEl);
+                
+                setTimeout(() => {
+                    achievementEl.remove();
+                }, 5000);
+            }
+
+            loadStats() {
+                const saved = localStorage.getItem('puzzleClock_stats');
+                return saved ? JSON.parse(saved) : {
+                    streak: 0,
+                    revealsUsed: 0,
+                    accuracy: 100,
+                    lastVisit: null
+                };
+            }
+
+            saveStats() {
+                this.stats.lastVisit = new Date().toDateString();
+                localStorage.setItem('puzzleClock_stats', JSON.stringify(this.stats));
+            }
+        }
+
+        // Initialize the Puzzle Clock when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PuzzleClock();
+        });
+    </script>
+</body>
+</html>
