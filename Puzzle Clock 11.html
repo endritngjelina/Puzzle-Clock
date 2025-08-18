@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Clock - Time Decoder Challenge</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00d4ff;
+            --secondary: #ff0080;
+            --accent: #ffaa00;
+            --dark-bg: #0f0f23;
+            --darker-bg: #0a0a18;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --success: #4CAF50;
+            --error: #F44336;
+            --warning: #FF9800;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--dark-bg) 0%, #1a1a2e 50%, #16213e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 20px;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            animation: glow 3s ease-in-out infinite alternate;
+            letter-spacing: 2px;
+            position: relative;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.3)); }
+            to { filter: drop-shadow(0 0 30px rgba(255, 0, 128, 0.5)); }
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            color: #a0a0a0;
+            margin-bottom: 20px;
+            max-width: 700px;
+            margin: 0 auto 30px;
+            line-height: 1.6;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--card-border);
+            text-align: center;
+            min-width: 150px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: var(--primary);
+        }
+
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            background-size: 200% 100%;
+            animation: borderGlow 3s linear infinite;
+        }
+
+        @keyframes borderGlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.95rem;
+            color: #a0a0a0;
+            margin-top: 5px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+        }
+
+        .control-label {
+            color: #a0a0a0;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        select, button {
+            background: var(--card-bg);
+            border: 2px solid var(--card-border);
+            color: white;
+            padding: 14px 25px;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            width: 100%;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        select:hover, button:hover {
+            border-color: var(--primary);
+            background: rgba(0, 212, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        select:focus, button:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        /* Puzzle Container */
+        .puzzle-container {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 40px;
+            margin-bottom: 30px;
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .puzzle-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent), var(--primary));
+            background-size: 200% 100%;
+            animation: borderGlow 3s linear infinite;
+        }
+
+        .puzzle-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .puzzle-type {
+            font-size: 2.2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .difficulty {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .easy { background: linear-gradient(45deg, #4CAF50, #45a049); }
+        .medium { background: linear-gradient(45deg, #FF9800, #f57c00); }
+        .hard { background: linear-gradient(45deg, #F44336, #d32f2f); }
+        .expert { background: linear-gradient(45deg, #9C27B0, #7b1fa2); }
+
+        /* Puzzle Display */
+        .puzzle-display {
+            font-family: 'Courier New', monospace;
+            font-size: 2.5rem;
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            margin: 20px 0;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--card-border);
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .binary-display {
+            letter-spacing: 10px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .emoji-display {
+            font-size: 4.5rem;
+            line-height: 1.2;
+            letter-spacing: 5px;
+        }
+
+        .color-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .color-block {
+            height: 90px;
+            border-radius: 15px;
+            border: 2px solid var(--card-border);
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+        }
+
+        .color-block:hover {
+            transform: scale(1.1);
+            border-color: rgba(255, 255, 255, 0.8);
+            z-index: 10;
+        }
+
+        .morse-display {
+            font-size: 3.5rem;
+            letter-spacing: 15px;
+            color: var(--primary);
+        }
+
+        .roman-display {
+            font-size: 3rem;
+            color: var(--accent);
+            text-shadow: 0 0 20px rgba(255, 170, 0, 0.5);
+            font-weight: bold;
+        }
+
+        .mathematical-display {
+            font-size: 2.2rem;
+            color: var(--primary);
+            line-height: 1.5;
+        }
+
+        /* Answer Section */
+        .answer-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .answer-input {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid var(--card-border);
+            color: white;
+            padding: 16px 30px;
+            border-radius: 15px;
+            font-size: 1.3rem;
+            text-align: center;
+            width: 260px;
+            margin: 0 15px 20px 0;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .check-btn {
+            background: linear-gradient(45deg, var(--success), #45a049);
+            border: none;
+            padding: 16px 35px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 1.1rem;
+            border-radius: 15px;
+        }
+
+        .check-btn:hover {
+            background: linear-gradient(45deg, #45a049, var(--success));
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            display: none;
+            backdrop-filter: blur(10px);
+            border: 2px solid transparent;
+        }
+
+        .correct {
+            background: linear-gradient(45deg, rgba(76, 175, 80, 0.3), rgba(69, 160, 73, 0.3));
+            border: 2px solid var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .incorrect {
+            background: linear-gradient(45deg, rgba(244, 67, 54, 0.3), rgba(211, 47, 47, 0.3));
+            border: 2px solid var(--error);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .hint-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .hint-btn {
+            background: linear-gradient(45deg, var(--warning), #f57c00);
+            border: none;
+            padding: 12px 25px;
+            font-weight: 600;
+            margin: 0 10px 15px;
+            border-radius: 12px;
+            display: inline-block;
+            min-width: 160px;
+        }
+
+        .hint-display {
+            margin-top: 15px;
+            padding: 20px;
+            background: rgba(255, 152, 0, 0.15);
+            border-radius: 15px;
+            border-left: 4px solid var(--warning);
+            color: #ffaa00;
+            display: none;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        /* Achievements Section */
+        .achievements-container {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 40px;
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .achievements-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent), var(--secondary), var(--primary));
+            background-size: 200% 100%;
+            animation: borderGlow 3s linear infinite;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .achievements {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 10px;
+        }
+
+        .achievement {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid var(--card-border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .achievement.unlocked {
+            border-color: var(--accent);
+            background: rgba(255, 170, 0, 0.1);
+            box-shadow: 0 0 30px rgba(255, 170, 0, 0.1);
+        }
+
+        .achievement.unlocked::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(255, 170, 0, 0.05) 100%);
+            pointer-events: none;
+        }
+
+        .achievement:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .achievement-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+
+        .achievement-title {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .achievement-desc {
+            font-size: 1rem;
+            color: #a0a0a0;
+            line-height: 1.5;
+        }
+
+        /* Streak Indicator */
+        .streak-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(45deg, var(--secondary), #ff4080);
+            padding: 12px 25px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(255, 0, 128, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Tutorial */
+        .tutorial {
+            background: rgba(0, 212, 255, 0.1);
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .tutorial h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tutorial p {
+            margin-bottom: 20px;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+
+        .tutorial button {
+            background: var(--primary);
+            color: var(--darker-bg);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-weight: 600;
+            width: auto;
+            margin-top: 10px;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 4px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .stats-bar {
+                gap: 15px;
+            }
+            
+            .stat-item {
+                min-width: 130px;
+                padding: 15px;
+            }
+            
+            .stat-value {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .title {
+                font-size: 2.5rem;
+            }
+            
+            .subtitle {
+                font-size: 1.1rem;
+            }
+            
+            .puzzle-display {
+                font-size: 1.8rem;
+                padding: 25px;
+            }
+            
+            .emoji-display {
+                font-size: 3.5rem;
+            }
+            
+            .answer-input {
+                width: 100%;
+                margin: 0 0 15px 0;
+            }
+            
+            .check-btn {
+                width: 100%;
+            }
+            
+            .streak-indicator {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin: 0 auto 20px;
+                width: fit-content;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .puzzle-container, .achievements-container {
+                padding: 25px 15px;
+            }
+            
+            .puzzle-type {
+                font-size: 1.8rem;
+            }
+            
+            .stat-item {
+                min-width: 120px;
+            }
+            
+            .mathematical-display {
+                font-size: 1.8rem;
+            }
+        }
+
+        /* Particle background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <div class="streak-indicator">
+            <i class="fas fa-fire"></i> <span id="streakCount">0</span> Day Streak
+        </div>
+
+        <div class="header">
+            <h1 class="title">PUZZLE CLOCK</h1>
+            <p class="subtitle">Decode the current time presented in cryptic formats. Challenge your mind daily and climb the leaderboard!</p>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="totalSolved">0</div>
+                <div class="stat-label">Puzzles Solved</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="accuracy">0%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="avgTime">0s</div>
+                <div class="stat-label">Avg Time</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="currentLevel">1</div>
+                <div class="stat-label">Level</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label class="control-label">Puzzle Type</label>
+                <select id="puzzleType">
+                    <option value="binary">Binary Code</option>
+                    <option value="emoji">Emoji Time</option>
+                    <option value="color">Color Blocks</option>
+                    <option value="morse">Morse Code</option>
+                    <option value="roman">Roman Numerals</option>
+                    <option value="mathematical">Mathematical</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Difficulty</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                    <option value="expert">Expert</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Actions</label>
+                <div style="display: flex; gap: 15px; width: 100%;">
+                    <button id="newPuzzle"><i class="fas fa-sync-alt"></i> New Puzzle</button>
+                    <button id="autoMode"><i class="fas fa-robot"></i> Auto Mode</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tutorial" id="tutorial">
+            <h3><i class="fas fa-graduation-cap"></i> How to Play</h3>
+            <p id="tutorialText">Select a puzzle type and decode the current time! Each puzzle presents the current time in a different cryptic format. Use your knowledge and reasoning skills to determine the correct time.</p>
+            <button onclick="document.getElementById('tutorial').style.display='none'">Got it!</button>
+        </div>
+
+        <div class="puzzle-container">
+            <div class="puzzle-header">
+                <h2 class="puzzle-type" id="currentPuzzleType">Binary Code</h2>
+                <span class="difficulty easy" id="currentDifficulty">Easy</span>
+            </div>
+            
+            <div class="puzzle-display" id="puzzleDisplay">
+                <div class="loading"></div>
+            </div>
+            
+            <div class="answer-section">
+                <input type="text" class="answer-input" id="answerInput" placeholder="HH:MM:SS" maxlength="8">
+                <button class="check-btn" id="checkAnswer"><i class="fas fa-check"></i> Check Answer</button>
+                <div class="hint-section">
+                    <button class="hint-btn" id="hintBtn"><i class="fas fa-lightbulb"></i> Show Hint</button>
+                    <button class="hint-btn" id="showTutorial"><i class="fas fa-book"></i> Tutorial</button>
+                    <div class="hint-display" id="hintDisplay"></div>
+                </div>
+            </div>
+            
+            <div id="feedback" class="feedback" style="display: none;"></div>
+        </div>
+
+        <div class="achievements-container">
+            <h2 class="section-title"><i class="fas fa-trophy"></i> Achievements</h2>
+            <div class="achievements">
+                <div class="achievement" id="achievement1">
+                    <div class="achievement-icon">🎯</div>
+                    <div class="achievement-title">First Success</div>
+                    <div class="achievement-desc">Solve your first puzzle</div>
+                </div>
+                <div class="achievement" id="achievement2">
+                    <div class="achievement-icon">⚡</div>
+                    <div class="achievement-title">Speed Demon</div>
+                    <div class="achievement-desc">Solve a puzzle in under 30s</div>
+                </div>
+                <div class="achievement" id="achievement3">
+                    <div class="achievement-icon">🔥</div>
+                    <div class="achievement-title">Hot Streak</div>
+                    <div class="achievement-desc">Maintain a 7-day streak</div>
+                </div>
+                <div class="achievement" id="achievement4">
+                    <div class="achievement-icon">🧠</div>
+                    <div class="achievement-title">Master Decoder</div>
+                    <div class="achievement-desc">Solve 100 puzzles</div>
+                </div>
+                <div class="achievement" id="achievement5">
+                    <div class="achievement-icon">🎖️</div>
+                    <div class="achievement-title">Perfect Score</div>
+                    <div class="achievement-desc">Maintain 100% accuracy over 20 puzzles</div>
+                </div>
+                <div class="achievement" id="achievement6">
+                    <div class="achievement-icon">🌟</div>
+                    <div class="achievement-title">Expert Level</div>
+                    <div class="achievement-desc">Complete 10 expert puzzles</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PuzzleClock {
+            constructor() {
+                this.currentTime = new Date();
+                this.startTime = null;
+                this.stats = this.loadStats();
+                this.achievements = this.loadAchievements();
+                this.autoModeInterval = null;
+                this.puzzleTypes = {
+                    binary: {
+                        name: 'Binary Code',
+                        tutorial: 'Convert binary numbers to decimal time format. Each group represents hours, minutes, and seconds. For example: 101100 (binary) = 44 (decimal).',
+                        hints: {
+                            easy: 'Each binary group represents one time component (hours, minutes, seconds)',
+                            medium: 'Remember: the leftmost digit is the most significant',
+                            hard: 'The entire binary string represents seconds since midnight',
+                            expert: 'Binary is XOR-encoded with a secret key'
+                        }
+                    },
+                    emoji: {
+                        name: 'Emoji Time',
+                        tutorial: 'Each emoji represents a number 0-9. Decode the pattern to find the time. Pay attention to the arrangement and separators.',
+                        hints: {
+                            easy: 'Each emoji consistently represents the same digit',
+                            medium: 'Look for patterns in the arrangement of emojis',
+                            hard: 'Some emojis might represent mathematical operations',
+                            expert: 'The emoji sequence is a mathematical expression to solve'
+                        }
+                    },
+                    color: {
+                        name: 'Color Blocks',
+                        tutorial: 'Each color represents a digit. Decode the color pattern to reveal the time. The position of the colors matters!',
+                        hints: {
+                            easy: 'Each color corresponds to a single digit (0-9)',
+                            medium: 'The intensity of the color might represent the digit value',
+                            hard: 'RGB values contain the encoded digits',
+                            expert: 'Colors are encoded with a custom algorithm'
+                        }
+                    },
+                    morse: {
+                        name: 'Morse Code',
+                        tutorial: 'Decode Morse code to numbers. Dots(.) and dashes(-) represent digits. Spaces separate different digits.',
+                        hints: {
+                            easy: 'Standard Morse code for numbers (0-9)',
+                            medium: 'Spaces separate different digits in the time',
+                            hard: 'The Morse code is continuous without separators',
+                            expert: 'Morse code with timing variations'
+                        }
+                    },
+                    roman: {
+                        name: 'Roman Numerals',
+                        tutorial: 'Convert Roman numerals to standard time format. Remember that IV=4, IX=9, XL=40, etc.',
+                        hints: {
+                            easy: 'Basic Roman numerals: I=1, V=5, X=10, L=50',
+                            medium: 'Remember subtraction rules: IV=4, IX=9, XL=40',
+                            hard: 'The Roman numeral represents total minutes since midnight',
+                            expert: 'The Roman numeral is an encoded mathematical expression'
+                        }
+                    },
+                    mathematical: {
+                        name: 'Mathematical',
+                        tutorial: 'Solve mathematical expressions to find the time components. Remember order of operations (PEMDAS).',
+                        hints: {
+                            easy: 'Simple arithmetic operations',
+                            medium: 'Order of operations matters (multiplication before addition)',
+                            hard: 'Advanced mathematical concepts like factorial and summation',
+                            expert: 'Complex formulas and functions'
+                        }
+                    }
+                };
+                this.init();
+            }
+
+            init() {
+                this.updateStats();
+                this.bindEvents();
+                this.generatePuzzle();
+                this.startAutoUpdate();
+                this.checkDailyStreak();
+                this.createParticles();
+            }
+
+            bindEvents() {
+                document.getElementById('newPuzzle').addEventListener('click', () => this.generatePuzzle());
+                document.getElementById('checkAnswer').addEventListener('click', () => this.checkAnswer());
+                document.getElementById('answerInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.checkAnswer();
+                });
+                document.getElementById('hintBtn').addEventListener('click', () => this.showHint());
+                document.getElementById('showTutorial').addEventListener('click', () => this.showTutorial());
+                document.getElementById('autoMode').addEventListener('click', () => this.toggleAutoMode());
+                document.getElementById('puzzleType').addEventListener('change', () => this.generatePuzzle());
+                document.getElementById('difficulty').addEventListener('change', () => this.generatePuzzle());
+            }
+
+            generatePuzzle() {
+                this.currentTime = new Date();
+                this.startTime = Date.now();
+                const type = document.getElementById('puzzleType').value;
+                const difficulty = document.getElementById('difficulty').value;
+                
+                document.getElementById('currentPuzzleType').textContent = this.puzzleTypes[type].name;
+                document.getElementById('currentDifficulty').textContent = difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
+                document.getElementById('currentDifficulty').className = `difficulty ${difficulty}`;
+                
+                document.getElementById('feedback').style.display = 'none';
+                document.getElementById('hintDisplay').style.display = 'none';
+                document.getElementById('answerInput').value = '';
+                
+                this[`generate${type.charAt(0).toUpperCase() + type.slice(1)}`](difficulty);
+            }
+
+            generateBinary(difficulty) {
+                const hours = this.currentTime.getHours();
+                const minutes = this.currentTime.getMinutes();
+                const seconds = this.currentTime.getSeconds();
+                
+                let display = '';
+                const container = document.getElementById('puzzleDisplay');
+                
+                switch(difficulty) {
+                    case 'easy':
+                        display = `${hours.toString(2).padStart(6, '0')} : ${minutes.toString(2).padStart(6, '0')} : ${seconds.toString(2).padStart(6, '0')}`;
+                        break;
+                    case 'medium':
+                        display = `${hours.toString(2).padStart(8, '0')}${minutes.toString(2).padStart(8, '0')}${seconds.toString(2).padStart(8, '0')}`;
+                        break;
+                    case 'hard':
+                        const combined = (hours * 3600 + minutes * 60 + seconds).toString(2);
+                        display = combined.padStart(17, '0');
+                        break;
+                    case 'expert':
+                        const encoded = (hours ^ 0x55) * 3600 + (minutes ^ 0xAA) * 60 + (seconds ^ 0x33);
+                        display = encoded.toString(2).padStart(20, '0');
+                        break;
+                }
+                
+                container.innerHTML = `<div class="binary-display">${display}</div>`;
+            }
+
+            generateEmoji(difficulty) {
+                const hours = this.currentTime.getHours();
+                const minutes = this.currentTime.getMinutes();
+                const seconds = this.currentTime.getSeconds();
+                
+                const emojiMap = ['🌙', '⭐', '🌟', '☀️', '🔥', '💎', '🌈', '⚡', '🎯', '🚀'];
+                const container = document.getElementById('puzzleDisplay');
+                
+                let display = '';
+                const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                switch(difficulty) {
+                    case 'easy':
+                        display = timeStr.split('').map(char => 
+                            char === ':' ? ':' : emojiMap[parseInt(char)]
+                        ).join('');
+                        break;
+                    case 'medium':
+                        display = timeStr.replace(/:/g, '').split('').map(char => 
+                            emojiMap[parseInt(char)]
+                        ).join(' ');
+                        break;
+                    case 'hard':
+                        const shuffledMap = [...emojiMap].sort(() => Math.random() - 0.5);
+                        display = timeStr.split('').map(char => 
+                            char === ':' ? ' 🕐 ' : shuffledMap[parseInt(char)]
+                        ).join('');
+                        this.currentShuffledMap = shuffledMap;
+                        break;
+                    case 'expert':
+                        const mathOps = ['➕', '➖', '✖️', '➗'];
+                        display = `${emojiMap[Math.floor(hours/10)]}${emojiMap[hours%10]} ${mathOps[0]} ${emojiMap[Math.floor(minutes/10)]}${emojiMap[minutes%10]} ${mathOps[1]} ${emojiMap[Math.floor(seconds/10)]}${emojiMap[seconds%10]}`;
+                        break;
+                }
+                
+                container.innerHTML = `<div class="emoji-display">${display}</div>`;
+            }
+
+            generateColor(difficulty) {
+                const hours = this.currentTime.getHours();
+                const minutes = this.currentTime.getMinutes();
+                const seconds = this.currentTime.getSeconds();
+                
+                const colors = [
+                    '#1a1a1a', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', 
+                    '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#FFC0CB'
+                ];
+                
+                const container = document.getElementById('puzzleDisplay');
+                container.innerHTML = '<div class="color-display" id="colorBlocks"></div>';
+                const colorContainer = document.getElementById('colorBlocks');
+                
+                const timeStr = `${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}${seconds.toString().padStart(2, '0')}`;
+                
+                switch(difficulty) {
+                    case 'easy':
+                        timeStr.split('').forEach((digit, index) => {
+                            if (index === 2 || index === 4) {
+                                const separator = document.createElement('div');
+                                separator.style.width = '20px';
+                                colorContainer.appendChild(separator);
+                            }
+                            const block = document.createElement('div');
+                            block.className = 'color-block';
+                            block.style.backgroundColor = colors[parseInt(digit)];
+                            block.title = `Position ${index + 1}`;
+                            colorContainer.appendChild(block);
+                        });
+                        break;
+                    case 'medium':
+                        timeStr.split('').forEach((digit) => {
+                            const block = document.createElement('div');
+                            block.className = 'color-block';
+                            const colorIndex = parseInt(digit);
+                            const opacity = 0.3 + (colorIndex * 0.07);
+                            block.style.backgroundColor = colors[colorIndex];
+                            block.style.opacity = opacity;
+                            colorContainer.appendChild(block);
+                        });
+                        break;
+                    case 'hard':
+                        timeStr.split('').forEach((digit) => {
+                            const block = document.createElement('div');
+                            block.className = 'color-block';
+                            const base = colors[parseInt(digit)];
+                            const r = parseInt(base.slice(1,3), 16) + Math.floor(Math.random() * 50) - 25;
+                            const g = parseInt(base.slice(3,5), 16) + Math.floor(Math.random() * 50) - 25;
+                            const b = parseInt(base.slice(5,7), 16) + Math.floor(Math.random() * 50) - 25;
+                            block.style.backgroundColor = `rgb(${Math.max(0,Math.min(255,r))}, ${Math.max(0,Math.min(255,g))}, ${Math.max(0,Math.min(255,b))})`;
+                            colorContainer.appendChild(block);
+                        });
+                        break;
+                    case 'expert':
+                        // RGB encoding where each component encodes part of time
+                        const totalSeconds = hours * 3600 + minutes * 60 + seconds;
+                        timeStr.split('').forEach((digit, index) => {
+                            const block = document.createElement('div');
+                            block.className = 'color-block';
+                            const r = (parseInt(digit) * 25) + (index * 10);
+                            const g = (totalSeconds >> (index * 2)) & 255;
+                            const b = ((hours + minutes + seconds) * parseInt(digit)) & 255;
+                            block.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+                            colorContainer.appendChild(block);
+                        });
+                        break;
+                }
+            }
+
+            generateMorse(difficulty) {
+                const hours = this.currentTime.getHours();
+                const minutes = this.currentTime.getMinutes();
+                const seconds = this.currentTime.getSeconds();
+                
+                const morseNumbers = {
+                    '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+                    '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.'
+                };
+                
+                const container = document.getElementById('puzzleDisplay');
+                const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                let display = '';
+                
+                switch(difficulty) {
+                    case 'easy':
+                        display = timeStr.split('').map(char => 
+                            char === ':' ? ' / ' : morseNumbers[char]
+                        ).join('  ');
+                        break;
+                    case 'medium':
+                        display = timeStr.replace(/:/g, '').split('').map(char => 
+                            morseNumbers[char]
+                        ).join('   ');
+                        break;
+                    case 'hard':
+                        // Continuous morse without spaces
+                        display = timeStr.replace(/:/g, '').split('').map(char => 
+                            morseNumbers[char]
+                        ).join('');
+                        break;
+                    case 'expert':
+                        // Morse with timing variations
+                        const fastMorse = timeStr.replace(/:/g, '').split('').map(char => 
+                            morseNumbers[char].replace(/\./g, '·').replace(/-/g, '—')
+                        ).join(' | ');
+                        display = fastMorse;
+                        break;
+                }
+                
+                container.innerHTML = `<div class="morse-display">${display}</div>`;
+            }
+
+            generateRoman(difficulty) {
+                const hours = this.currentTime.getHours();
+                const minutes = this.currentTime.getMinutes();
+                const seconds = this.currentTime.getSeconds();
+                
+                const toRoman = (num) => {
+                    if (num === 0) return 'N';
+                    const values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+                    const symbols = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
+                    let result = '';
+                    
+                    for (let i = 0; i < values.length; i++) {
+                        while (num >= values[i]) {
+                            result += symbols[i];
+                            num -= values[i];
+                        }
+                    }
+                    return result;
+                };
+                
+                const container = document.getElementById('puzzleDisplay');
+                let display = '';
+                
+                switch(difficulty) {
+                    case 'easy':
+                        display = `${toRoman(hours)} : ${toRoman(minutes)} : ${toRoman(seconds)}`;
+                        break;
+                    case 'medium':
+                        const h1 = Math.floor(hours / 10);
+                        const h2 = hours % 10;
+                        const m1 = Math.floor(minutes / 10);
+                        const m2 = minutes % 10;
+                        const s1 = Math.floor(seconds / 10);
+                        const s2 = seconds % 10;
+                        display = `${h1 ? toRoman(h1) : ''}${toRoman(h2)}:${m1 ? toRoman(m1) : ''}${toRoman(m2)}:${s1 ? toRoman(s1) : ''}${toRoman(s2)}`;
+                        break;
+                    case 'hard':
+                        const totalMinutes = hours * 60 + minutes;
+                        display = `${toRoman(totalMinutes)} + ${toRoman(seconds)}`;
+                        break;
+                    case 'expert':
+                        const encoded = (hours * 1000) + (minutes * 10) + Math.floor(seconds / 6);
+                        display = `${toRoman(encoded)}`;
+                        this.expertRomanBase = { hours, minutes, seconds };
+                        break;
+                }
+                
+                container.innerHTML = `<div class="roman-display">${display}</div>`;
+            }
+
+            generateMathematical(difficulty) {
+                const hours = this.currentTime.getHours();
+                const minutes = this.currentTime.getMinutes();
+                const seconds = this.currentTime.getSeconds();
+                
+                const container = document.getElementById('puzzleDisplay');
+                let display = '';
+                
+                switch(difficulty) {
+                    case 'easy':
+                        display = `H = ${hours + 5} - 5<br>M = ${minutes + 10} - 10<br>S = ${seconds + 15} - 15`;
+                        break;
+                    case 'medium':
+                        display = `H = √${hours * hours}<br>M = ${minutes * 2} ÷ 2<br>S = ${seconds}! ÷ ${this.factorial(seconds - 1) || 1}`;
+                        break;
+                    case 'hard':
+                        const a = Math.floor(Math.random() * 10) + 1;
+                        const b = Math.floor(Math.random() * 10) + 1;
+                        display = `H = (${hours * a} ÷ ${a}) mod 24<br>M = Σ(1 to ${minutes}) mod 60 = ${(minutes * (minutes + 1)) / 2}<br>S = 2^${Math.log2(seconds) | 0} ${seconds - Math.pow(2, Math.log2(seconds) | 0) ? '+ ' + (seconds - Math.pow(2, Math.log2(seconds) | 0)) : ''}`;
+                        break;
+                    case 'expert':
+                        const prime = this.isPrime(seconds) ? seconds : this.nextPrime(seconds);
+                        display = `f(x,y,z) = x²+y²+z²<br>where f(${Math.floor(Math.sqrt(hours))}, ${Math.floor(Math.sqrt(minutes))}, ${Math.floor(Math.sqrt(seconds))}) = ${hours + minutes + seconds}<br>Prime factor of S: ${prime}`;
+                        break;
+                }
+                
+                container.innerHTML = `<div class="mathematical-display">${display}</div>`;
+            }
+
+            factorial(n) {
+                if (n <= 1) return 1;
+                return n * this.factorial(n - 1);
+            }
+
+            isPrime(n) {
+                if (n <= 1) return false;
+                if (n <= 3) return true;
+                if (n % 2 === 0 || n % 3 === 0) return false;
+                for (let i = 5; i * i <= n; i += 6) {
+                    if (n % i === 0 || n % (i + 2) === 0) return false;
+                }
+                return true;
+            }
+
+            nextPrime(n) {
+                while (!this.isPrime(++n)) {}
+                return n;
+            }
+
+            checkAnswer() {
+                const userAnswer = document.getElementById('answerInput').value.trim();
+                const correctTime = `${this.currentTime.getHours().toString().padStart(2, '0')}:${this.currentTime.getMinutes().toString().padStart(2, '0')}:${this.currentTime.getSeconds().toString().padStart(2, '0')}`;
+                
+                const feedback = document.getElementById('feedback');
+                const isCorrect = userAnswer === correctTime;
+                
+                if (isCorrect) {
+                    const solveTime = (Date.now() - this.startTime) / 1000;
+                    feedback.innerHTML = `🎉 Correct! The time was ${correctTime}<br>Solved in ${solveTime.toFixed(1)} seconds`;
+                    feedback.className = 'feedback correct';
+                    this.updateStatsOnSuccess(solveTime);
+                    this.checkAchievements(solveTime);
+                } else {
+                    feedback.innerHTML = `❌ Incorrect. The correct time was ${correctTime}<br>Try again with a new puzzle!`;
+                    feedback.className = 'feedback incorrect';
+                    this.updateStatsOnFailure();
+                }
+                
+                feedback.style.display = 'block';
+                setTimeout(() => this.generatePuzzle(), 3000);
+            }
+
+            showHint() {
+                const type = document.getElementById('puzzleType').value;
+                const difficulty = document.getElementById('difficulty').value;
+                const hintDisplay = document.getElementById('hintDisplay');
+                
+                hintDisplay.textContent = this.puzzleTypes[type].hints[difficulty];
+                hintDisplay.style.display = hintDisplay.style.display === 'block' ? 'none' : 'block';
+            }
+
+            showTutorial() {
+                const type = document.getElementById('puzzleType').value;
+                const tutorial = document.getElementById('tutorial');
+                const tutorialText = document.getElementById('tutorialText');
+                
+                tutorialText.textContent = this.puzzleTypes[type].tutorial;
+                tutorial.style.display = 'block';
+            }
+
+            toggleAutoMode() {
+                const btn = document.getElementById('autoMode');
+                if (this.autoModeInterval) {
+                    clearInterval(this.autoModeInterval);
+                    this.autoModeInterval = null;
+                    btn.innerHTML = '<i class="fas fa-robot"></i> Auto Mode';
+                    btn.style.background = 'rgba(255, 255, 255, 0.1)';
+                } else {
+                    this.autoModeInterval = setInterval(() => this.generatePuzzle(), 10000);
+                    btn.innerHTML = '<i class="fas fa-stop"></i> Stop Auto';
+                    btn.style.background = 'linear-gradient(45deg, #F44336, #d32f2f)';
+                }
+            }
+
+            startAutoUpdate() {
+                setInterval(() => this.generatePuzzle(), 60000); // Update every minute
+            }
+
+            updateStatsOnSuccess(solveTime) {
+                this.stats.totalSolved++;
+                this.stats.totalAttempts++;
+                this.stats.totalTime += solveTime;
+                this.stats.streak++;
+                this.stats.lastSolveDate = new Date().toDateString();
+                
+                if (solveTime < 30) this.stats.fastSolves++;
+                
+                const difficulty = document.getElementById('difficulty').value;
+                if (!this.stats.difficultyStats[difficulty]) {
+                    this.stats.difficultyStats[difficulty] = 0;
+                }
+                this.stats.difficultyStats[difficulty]++;
+                
+                this.saveStats();
+                this.updateStats();
+            }
+
+            updateStatsOnFailure() {
+                this.stats.totalAttempts++;
+                this.stats.streak = 0;
+                this.saveStats();
+                this.updateStats();
+            }
+
+            updateStats() {
+                document.getElementById('totalSolved').textContent = this.stats.totalSolved;
+                document.getElementById('accuracy').textContent = 
+                    this.stats.totalAttempts > 0 ? 
+                    Math.round((this.stats.totalSolved / this.stats.totalAttempts) * 100) + '%' : '0%';
+                document.getElementById('avgTime').textContent = 
+                    this.stats.totalSolved > 0 ? 
+                    (this.stats.totalTime / this.stats.totalSolved).toFixed(1) + 's' : '0s';
+                document.getElementById('currentLevel').textContent = Math.floor(this.stats.totalSolved / 10) + 1;
+                document.getElementById('streakCount').textContent = this.stats.streak;
+            }
+
+            checkAchievements(solveTime) {
+                const achievements = [
+                    {
+                        id: 'achievement1',
+                        condition: () => this.stats.totalSolved >= 1,
+                        key: 'firstSuccess'
+                    },
+                    {
+                        id: 'achievement2',
+                        condition: () => solveTime < 30,
+                        key: 'speedDemon'
+                    },
+                    {
+                        id: 'achievement3',
+                        condition: () => this.stats.streak >= 7,
+                        key: 'hotStreak'
+                    },
+                    {
+                        id: 'achievement4',
+                        condition: () => this.stats.totalSolved >= 100,
+                        key: 'masterDecoder'
+                    },
+                    {
+                        id: 'achievement5',
+                        condition: () => this.stats.totalAttempts >= 20 && 
+                                         (this.stats.totalSolved / this.stats.totalAttempts) === 1,
+                        key: 'perfectScore'
+                    },
+                    {
+                        id: 'achievement6',
+                        condition: () => this.stats.difficultyStats.expert >= 10,
+                        key: 'expertLevel'
+                    }
+                ];
+
+                achievements.forEach(achievement => {
+                    if (achievement.condition() && !this.achievements[achievement.key]) {
+                        this.achievements[achievement.key] = true;
+                        document.getElementById(achievement.id).classList.add('unlocked');
+                        this.showAchievementNotification(achievement.id);
+                    }
+                });
+
+                this.saveAchievements();
+            }
+
+            showAchievementNotification(achievementId) {
+                const achievement = document.getElementById(achievementId);
+                const title = achievement.querySelector('.achievement-title').textContent;
+                
+                // Create notification
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: linear-gradient(45deg, #ffaa00, #ff8800);
+                    color: white;
+                    padding: 20px;
+                    border-radius: 15px;
+                    font-weight: bold;
+                    z-index: 1000;
+                    animation: slideIn 0.5s ease-out;
+                    box-shadow: 0 10px 30px rgba(255, 170, 0, 0.3);
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                `;
+                notification.innerHTML = `🏆 <div>Achievement Unlocked!<br><strong>${title}</strong></div>`;
+                
+                document.body.appendChild(notification);
+                setTimeout(() => {
+                    notification.style.animation = 'fadeOut 0.5s ease-out forwards';
+                    setTimeout(() => notification.remove(), 500);
+                }, 3000);
+            }
+
+            checkDailyStreak() {
+                const today = new Date().toDateString();
+                const lastSolve = this.stats.lastSolveDate;
+                
+                if (lastSolve !== today) {
+                    const lastDate = new Date(lastSolve);
+                    const todayDate = new Date(today);
+                    const daysDiff = (todayDate - lastDate) / (1000 * 60 * 60 * 24);
+                    
+                    if (daysDiff > 1) {
+                        this.stats.streak = 0;
+                        this.saveStats();
+                        this.updateStats();
+                    }
+                }
+            }
+
+            loadStats() {
+                const defaultStats = {
+                    totalSolved: 0,
+                    totalAttempts: 0,
+                    totalTime: 0,
+                    streak: 0,
+                    fastSolves: 0,
+                    lastSolveDate: '',
+                    difficultyStats: {}
+                };
+                
+                try {
+                    const saved = JSON.parse(localStorage.getItem('puzzleClockStats') || '{}');
+                    return { ...defaultStats, ...saved };
+                } catch (e) {
+                    return defaultStats;
+                }
+            }
+
+            saveStats() {
+                try {
+                    localStorage.setItem('puzzleClockStats', JSON.stringify(this.stats));
+                } catch (e) {
+                    console.warn('Could not save stats to localStorage');
+                }
+            }
+
+            loadAchievements() {
+                try {
+                    const saved = JSON.parse(localStorage.getItem('puzzleClockAchievements') || '{}');
+                    
+                    // Update UI for unlocked achievements
+                    Object.keys(saved).forEach(key => {
+                        if (saved[key]) {
+                            const achievementMap = {
+                                'firstSuccess': 'achievement1',
+                                'speedDemon': 'achievement2',
+                                'hotStreak': 'achievement3',
+                                'masterDecoder': 'achievement4',
+                                'perfectScore': 'achievement5',
+                                'expertLevel': 'achievement6'
+                            };
+                            const element = document.getElementById(achievementMap[key]);
+                            if (element) element.classList.add('unlocked');
+                        }
+                    });
+                    
+                    return saved;
+                } catch (e) {
+                    return {};
+                }
+            }
+
+            saveAchievements() {
+                try {
+                    localStorage.setItem('puzzleClockAchievements', JSON.stringify(this.achievements));
+                } catch (e) {
+                    console.warn('Could not save achievements to localStorage');
+                }
+            }
+            
+            createParticles() {
+                const particlesContainer = document.getElementById('particles');
+                const particleCount = 50;
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.style.position = 'absolute';
+                    particle.style.width = `${Math.random() * 5 + 1}px`;
+                    particle.style.height = particle.style.width;
+                    particle.style.backgroundColor = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 0.3 + 0.1})`;
+                    particle.style.borderRadius = '50%';
+                    particle.style.top = `${Math.random() * 100}%`;
+                    particle.style.left = `${Math.random() * 100}%`;
+                    particle.style.pointerEvents = 'none';
+                    
+                    particlesContainer.appendChild(particle);
+                    
+                    // Animate particles
+                    this.animateParticle(particle);
+                }
+            }
+            
+            animateParticle(particle) {
+                const startX = parseFloat(particle.style.left);
+                const startY = parseFloat(particle.style.top);
+                const endX = startX + (Math.random() * 100 - 50);
+                const endY = startY + (Math.random() * 100 - 50);
+                const duration = Math.random() * 10000 + 10000;
+                
+                const keyframes = [
+                    { transform: `translate(0, 0)` },
+                    { transform: `translate(${endX - startX}%, ${endY - startY}%)` }
+                ];
+                
+                const options = {
+                    duration: duration,
+                    iterations: Infinity,
+                    direction: 'alternate',
+                    easing: 'ease-in-out'
+                };
+                
+                particle.animate(keyframes, options);
+            }
+        }
+
+        // Enhanced CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                }
+                to {
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            new PuzzleClock();
+        });
+    </script>
+</body>
+</html>
