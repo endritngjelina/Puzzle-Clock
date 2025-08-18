@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Clock - Time Decoder Challenge</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --shadow-light: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 16px 40px rgba(0, 0, 0, 0.15);
+            --shadow-heavy: 0 24px 60px rgba(0, 0, 0, 0.2);
+            --glow-primary: 0 0 30px rgba(102, 126, 234, 0.3);
+            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        *::selection {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            box-shadow: 
+                0 32px 64px rgba(0, 0, 0, 0.15),
+                0 8px 16px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            padding: 2.5rem;
+            max-width: 900px;
+            width: 90%;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+
+        .container:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.2),
+                0 12px 24px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: -1;
+            animation: pulse-glow 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.2; }
+        }
+
+        .title {
+            font-size: 3.2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #667eea 75%, #764ba2 100%);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.8rem;
+            animation: gradientShift 6s ease-in-out infinite;
+            position: relative;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+        }
+
+        .title::before {
+            content: '🧩';
+            position: absolute;
+            top: -0.5rem;
+            right: -1rem;
+            font-size: 2rem;
+            animation: float 3s ease-in-out infinite;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            bottom: -0.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #667eea, #764ba2, #f093fb, transparent);
+            border-radius: 2px;
+            animation: underlineGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes underlineGlow {
+            0%, 100% { opacity: 0.3; transform: translateX(-50%) scaleX(0.8); }
+            50% { opacity: 1; transform: translateX(-50%) scaleX(1.2); }
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            33% { background-position: 100% 0%; }
+            66% { background-position: 0% 100%; }
+        }
+
+        .subtitle {
+            color: rgba(102, 126, 234, 0.8);
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            position: relative;
+            animation: fadeInUp 1s ease-out 0.5s both;
+        }
+
+        .subtitle::before {
+            content: '✨';
+            margin-right: 0.5rem;
+            animation: sparkle-rotate 2s linear infinite;
+        }
+
+        .subtitle::after {
+            content: '✨';
+            margin-left: 0.5rem;
+            animation: sparkle-rotate 2s linear infinite reverse;
+        }
+
+        @keyframes sparkle-rotate {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            25% { transform: rotate(90deg) scale(1.2); }
+            50% { transform: rotate(180deg) scale(1); }
+            75% { transform: rotate(270deg) scale(1.2); }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-bottom: 2.5rem;
+            flex-wrap: wrap;
+            position: relative;
+            animation: slideInDown 1s ease-out 0.8s both;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mode-btn {
+            padding: 1rem 1.8rem;
+            border: none;
+            border-radius: 35px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(15px) saturate(1.2);
+            color: #333;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            transition: var(--transition-bounce);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .mode-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+            transition: left 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mode-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 2px;
+            background: var(--primary-gradient);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: xor;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mode-btn:hover {
+            background: rgba(240, 240, 240, 0.95);
+            transform: translateY(-4px) scale(1.08);
+            box-shadow: 
+                0 12px 35px rgba(0, 0, 0, 0.2),
+                0 4px 15px rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+
+        .mode-btn:hover::before {
+            left: 100%;
+        }
+
+        .mode-btn:hover::after {
+            opacity: 1;
+        }
+
+        .mode-btn.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 
+                0 12px 35px rgba(102, 126, 234, 0.5),
+                0 0 0 4px rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px) scale(1.05);
+            border-color: rgba(255, 255, 255, 0.6);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .mode-btn.active:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 50%, #e085f0 100%);
+            transform: translateY(-5px) scale(1.1);
+            box-shadow: 
+                0 16px 45px rgba(102, 126, 234, 0.6),
+                var(--glow-primary);
+        }
+
+        .mode-btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        .clock-display {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: 
+                linear-gradient(135deg, rgba(248, 249, 250, 0.9) 0%, rgba(233, 236, 239, 0.9) 100%),
+                radial-gradient(circle at 30% 70%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 70% 30%, rgba(240, 147, 251, 0.1) 0%, transparent 50%);
+            border-radius: 25px;
+            margin-bottom: 2.5rem;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            box-shadow: 
+                var(--shadow-medium),
+                inset 0 2px 0 rgba(255, 255, 255, 0.9),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition-smooth);
+            backdrop-filter: blur(20px);
+        }
+
+        .clock-display::before {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: 
+                linear-gradient(45deg, 
+                    transparent 30%, 
+                    rgba(255, 255, 255, 0.1) 40%,
+                    rgba(102, 126, 234, 0.05) 50%,
+                    rgba(255, 255, 255, 0.1) 60%,
+                    transparent 70%);
+            transform: rotate(-45deg);
+            animation: shimmer 4s linear infinite;
+            pointer-events: none;
+        }
+
+        .clock-display::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                conic-gradient(from 0deg at 50% 50%, 
+                    rgba(102, 126, 234, 0.05) 0deg,
+                    transparent 60deg,
+                    rgba(240, 147, 251, 0.05) 120deg,
+                    transparent 180deg,
+                    rgba(118, 75, 162, 0.05) 240deg,
+                    transparent 300deg,
+                    rgba(102, 126, 234, 0.05) 360deg);
+            border-radius: 22px;
+            animation: conicRotate 15s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes conicRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(-45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(-45deg); }
+        }
+
+        .clock-display:hover {
+            transform: scale(1.02) translateY(-2px);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.2),
+                inset 0 2px 0 rgba(255, 255, 255, 0.95),
+                var(--glow-primary);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .puzzle-time {
+            font-size: 3.5rem;
+            font-weight: 800;
+            font-family: 'Inter', 'Courier New', monospace;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+            position: relative;
+            z-index: 3;
+            transition: var(--transition-smooth);
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 25%, #667eea 50%, #764ba2 75%, #2c3e50 100%);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: textGradientFlow 8s ease-in-out infinite;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+        }
+
+        .puzzle-time::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: inherit;
+            background-clip: text;
+            -webkit-background-clip: text;
+            filter: blur(20px);
+            opacity: 0.3;
+            z-index: -1;
+            animation: textGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes textGradientFlow {
+            0%, 100% { background-position: 0% 50%; }
+            25% { background-position: 100% 0%; }
+            50% { background-position: 0% 100%; }
+            75% { background-position: 100% 50%; }
+        }
+
+        @keyframes textGlow {
+            0% { opacity: 0.2; filter: blur(15px); }
+            100% { opacity: 0.4; filter: blur(25px); }
+        }
+
+        .puzzle-time:hover {
+            transform: scale(1.08) rotateX(5deg);
+            text-shadow: 
+                0 8px 16px rgba(102, 126, 234, 0.3),
+                0 4px 8px rgba(0, 0, 0, 0.2);
+            animation-duration: 2s;
+        }
+
+        .color-blocks {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+
+        .color-blocks {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .color-block {
+            width: 75px;
+            height: 75px;
+            border-radius: 20px;
+            box-shadow: 
+                0 12px 30px rgba(0, 0, 0, 0.25),
+                inset 0 3px 0 rgba(255, 255, 255, 0.4),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            transition: var(--transition-bounce);
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .color-block::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%),
+                linear-gradient(-45deg, transparent 30%, rgba(255, 255, 255, 0.2) 70%);
+            border-radius: 17px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .color-block::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            background: var(--primary-gradient);
+            border-radius: 23px;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            filter: blur(8px);
+        }
+
+        .color-block:hover {
+            transform: scale(1.2) translateZ(20px) rotateY(15deg);
+            box-shadow: 
+                0 20px 50px rgba(0, 0, 0, 0.3),
+                inset 0 4px 0 rgba(255, 255, 255, 0.5),
+                var(--glow-primary);
+            border-color: rgba(255, 255, 255, 1);
+        }
+
+        .color-block:hover::before {
+            opacity: 1;
+        }
+
+        .color-block:hover::after {
+            opacity: 0.5;
+        }
+
+        .color-block:active {
+            transform: scale(1.1) translateZ(10px);
+            transition: transform 0.1s ease;
+        }
+
+        .color-block::after {
+            content: attr(data-value);
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #666;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .show-hints .color-block::after {
+            opacity: 1;
+        }
+
+        .answer-section {
+            background: 
+                linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .answer-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            background-size: 200% 100%;
+            animation: borderFlow 3s linear infinite;
+        }
+
+        @keyframes borderFlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        .answer-input {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .answer-input::before {
+            content: '⏰';
+            position: absolute;
+            top: -2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.5rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% { transform: translateX(-50%) translateY(0); }
+            40%, 43% { transform: translateX(-50%) translateY(-15px); }
+            70% { transform: translateX(-50%) translateY(-7px); }
+            90% { transform: translateX(-50%) translateY(-2px); }
+        }
+
+        .time-separator {
+            font-size: 2rem;
+            font-weight: 900;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse-separator 2s ease-in-out infinite;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        @keyframes pulse-separator {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .time-input {
+            padding: 1rem 1.2rem;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+            width: 85px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 4px 15px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .time-input::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.15),
+                0 8px 25px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .time-input:focus::before {
+            left: 100%;
+        }
+
+        .time-input:hover {
+            border-color: #a8b3ea;
+            transform: translateY(-2px);
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .submit-btn, .hint-btn, .reset-btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1.05rem;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 2px solid transparent;
+        }
+
+        .submit-btn, .hint-btn, .reset-btn {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .submit-btn::before, .hint-btn::before, .reset-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #28a745, #20c997, #17a2b8);
+            color: white;
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, #218838, #1e9b85, #138496);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(40, 167, 69, 0.5);
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .hint-btn {
+            background: linear-gradient(135deg, #ffc107, #ff8c00, #fd7e14);
+            color: white;
+            box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+        }
+
+        .hint-btn:hover {
+            background: linear-gradient(135deg, #e0a800, #e07600, #e8590c);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(255, 193, 7, 0.5);
+        }
+
+        .hint-btn:hover::before {
+            left: 100%;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #dc3545, #c82333, #bd2130);
+            color: white;
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+        }
+
+        .reset-btn:hover {
+            background: linear-gradient(135deg, #c82333, #a71e2a, #941a20);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(220, 53, 69, 0.5);
+        }
+
+        .reset-btn:hover::before {
+            left: 100%;
+        }
+
+        .feedback {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 15px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 2px solid transparent;
+        }
+
+        .feedback::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+            transform: rotate(-45deg);
+            animation: feedbackShimmer 2s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes feedbackShimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(-45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(-45deg); }
+        }
+
+        .feedback.success {
+            background: 
+                linear-gradient(135deg, #d4edda 0%, #c3e6cb 50%, #b8dcc3 100%);
+            color: #155724;
+            border-color: rgba(195, 230, 203, 0.8);
+            box-shadow: 
+                0 8px 25px rgba(21, 87, 36, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .feedback.success:hover {
+            transform: scale(1.02);
+            box-shadow: 
+                0 12px 35px rgba(21, 87, 36, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .feedback.error {
+            background: 
+                linear-gradient(135deg, #f8d7da 0%, #f5c6cb 50%, #f2b6bd 100%);
+            color: #721c24;
+            border-color: rgba(245, 198, 203, 0.8);
+            box-shadow: 
+                0 8px 25px rgba(114, 28, 36, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .feedback.error:hover {
+            transform: scale(1.02);
+            box-shadow: 
+                0 12px 35px rgba(114, 28, 36, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .feedback.info {
+            background: 
+                linear-gradient(135deg, #d1ecf1 0%, #bee5eb 50%, #abdde5 100%);
+            color: #0c5460;
+            border-color: rgba(190, 229, 235, 0.8);
+            box-shadow: 
+                0 8px 25px rgba(12, 84, 96, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+            animation: slideInUp 1s ease-out 1.5s both;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card {
+            background: 
+                linear-gradient(135deg, #ffffff 0%, #f8f9fa 50%, #e9ecef 100%);
+            padding: 2rem 1.5rem;
+            border-radius: 18px;
+            text-align: center;
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+            transform-origin: left;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 
+                0 15px 40px rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+            animation: statGradient 3s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        @keyframes statGradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .stat-card:hover .stat-number {
+            transform: scale(1.1);
+            animation-duration: 1s;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .help-section {
+            background: 
+                linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            margin-top: 1.5rem;
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .help-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .help-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 35px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .help-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .help-content {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .binary-group {
+            margin: 0.8rem 0;
+            font-size: 2.2rem;
+            letter-spacing: 0.3em;
+            position: relative;
+            padding: 0.5rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition-smooth);
+        }
+
+        .binary-group:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .binary-group:nth-child(1)::before { content: 'HOURS'; }
+        .binary-group:nth-child(2)::before { content: 'MINUTES'; }
+        .binary-group:nth-child(3)::before { content: 'SECONDS'; }
+
+        .binary-group::before {
+            position: absolute;
+            top: -0.5rem;
+            left: 1rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: rgba(102, 126, 234, 0.8);
+            background: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            letter-spacing: 0.1em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(233, 236, 239, 0.8);
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 1.5rem 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                rgba(255, 255, 255, 0.1) 0%, 
+                rgba(255, 255, 255, 0.3) 50%, 
+                rgba(255, 255, 255, 0.1) 100%);
+            animation: progressShimmer 2s linear infinite;
+        }
+
+        @keyframes progressShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            background-size: 200% 100%;
+            width: 0%;
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            animation: progressGradient 2s ease-in-out infinite;
+        }
+
+        @keyframes progressGradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+                border-radius: 20px;
+            }
+            
+            .title {
+                font-size: 2.2rem;
+            }
+            
+            .puzzle-time {
+                font-size: 2.5rem;
+            }
+            
+            .color-block {
+                width: 55px;
+                height: 55px;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 1rem;
+            }
+            
+            .mode-btn {
+                padding: 0.8rem 1.2rem;
+                font-size: 0.85rem;
+            }
+            
+            .time-input {
+                width: 75px;
+                font-size: 1rem;
+            }
+            
+            .binary-group {
+                font-size: 1.8rem;
+                margin: 0.5rem 0;
+            }
+            
+            .answer-input {
+                gap: 1rem;
+            }
+            
+            .button-row {
+                gap: 0.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem 1rem;
+            }
+            
+            .title {
+                font-size: 1.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .puzzle-time {
+                font-size: 2rem;
+            }
+            
+            .color-block {
+                width: 45px;
+                height: 45px;
+            }
+            
+            .clock-display {
+                padding: 2.5rem 1rem;
+                min-height: 180px;
+            }
+            
+            .stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .mode-selector {
+                gap: 0.5rem;
+            }
+            
+            .mode-btn {
+                padding: 0.7rem 1rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        .celebration {
+            animation: celebration 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes celebration {
+            0% { 
+                transform: scale(1) rotate(0deg);
+                box-shadow: 
+                    0 32px 64px rgba(0, 0, 0, 0.15),
+                    0 8px 16px rgba(0, 0, 0, 0.1);
+            }
+            25% { 
+                transform: scale(1.05) rotate(-2deg);
+                box-shadow: 
+                    0 40px 80px rgba(102, 126, 234, 0.2),
+                    0 12px 24px rgba(102, 126, 234, 0.15);
+            }
+            75% { 
+                transform: scale(1.05) rotate(2deg);
+                box-shadow: 
+                    0 40px 80px rgba(118, 75, 162, 0.2),
+                    0 12px 24px rgba(118, 75, 162, 0.15);
+            }
+            100% { 
+                transform: scale(1) rotate(0deg);
+                box-shadow: 
+                    0 32px 64px rgba(0, 0, 0, 0.15),
+                    0 8px 16px rgba(0, 0, 0, 0.1);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0% { 
+                transform: scale(1); 
+                box-shadow: 
+                    0 8px 32px rgba(0, 0, 0, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            }
+            50% { 
+                transform: scale(1.03); 
+                box-shadow: 
+                    0 12px 40px rgba(220, 53, 69, 0.2),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            }
+            100% { 
+                transform: scale(1); 
+                box-shadow: 
+                    0 8px 32px rgba(0, 0, 0, 0.1),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            }
+        }
+        .help-section {
+            background: 
+                linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            margin-top: 1.5rem;
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .help-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .help-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 12px 35px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.help-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.help-section p {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #555;
+}
+
+.help-section a {
+    color: #667eea;
+    font-weight: 500;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.help-section a:hover {
+    color: #764ba2;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">🧩 Puzzle Clock</h1>
+            <p class="subtitle">Decode the time and challenge your mind daily!</p>
+        </div>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="binary">Binary Mode</button>
+            <button class="mode-btn" data-mode="emoji">Emoji Mode</button>
+            <button class="mode-btn" data-mode="color">Color Mode</button>
+            <button class="mode-btn" data-mode="morse">Morse Code</button>
+            <button class="mode-btn" data-mode="roman">Roman Mode</button>
+        </div>
+
+        <div class="clock-display">
+            <div id="puzzle-display" class="puzzle-time"></div>
+            <div id="color-display" class="color-blocks" style="display: none;"></div>
+        </div>
+
+        <div class="answer-section">
+            <div class="answer-input">
+                <input type="number" id="hours" class="time-input" placeholder="HH" min="0" max="23">
+                <span style="font-size: 1.5rem; font-weight: bold;">:</span>
+                <input type="number" id="minutes" class="time-input" placeholder="MM" min="0" max="59">
+                <span style="font-size: 1.5rem; font-weight: bold;">:</span>
+                <input type="number" id="seconds" class="time-input" placeholder="SS" min="0" max="59">
+            </div>
+            
+        .button-group {
+            display: flex;
+            gap: 1.2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 1.2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeInScale 1s ease-out 1.2s both;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+                <button id="submit-btn" class="submit-btn">🎯 Submit Answer</button>
+                <button id="hint-btn" class="hint-btn">💡 Show Hint</button>
+                <button id="reset-btn" class="reset-btn">🔄 New Puzzle</button>
+            </div>
+
+            <div class="progress-bar">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            
+            <div id="feedback" class="feedback" style="display: none;"></div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <span id="correct-count" class="stat-number">0</span>
+                <div class="stat-label">Correct Answers</div>
+            </div>
+            <div class="stat-card">
+                <span id="total-attempts" class="stat-number">0</span>
+                <div class="stat-label">Total Attempts</div>
+            </div>
+            <div class="stat-card">
+                <span id="accuracy-rate" class="stat-number">0%</span>
+                <div class="stat-label">Accuracy Rate</div>
+            </div>
+            <div class="stat-card">
+                <span id="current-streak" class="stat-number">0</span>
+                <div class="stat-label">Current Streak</div>
+            </div>
+        </div>
+
+        <div class="help-section">
+            <div class="help-title">📚 How to Play</div>
+            <div id="help-content" class="help-content">
+                <strong>Binary Mode:</strong> Each digit is represented in 4-bit binary. Hours, minutes, and seconds are shown as binary digits (0s and 1s).
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PuzzleClock {
+            constructor() {
+                this.currentMode = 'binary';
+                this.currentTime = { hours: 0, minutes: 0, seconds: 0 };
+                this.stats = this.loadStats();
+                this.showingHints = false;
+                this.difficulty = 1;
+                
+                this.colorMapping = {
+                    0: '#2c3e50', 1: '#e74c3c', 2: '#f39c12', 3: '#f1c40f',
+                    4: '#27ae60', 5: '#16a085', 6: '#2980b9', 7: '#8e44ad',
+                    8: '#34495e', 9: '#e67e22'
+                };
+                
+                this.emojiMapping = {
+                    0: '🕐', 1: '🕑', 2: '🕒', 3: '🕓', 4: '🕔',
+                    5: '🕕', 6: '🕖', 7: '🕗', 8: '🕘', 9: '🕙'
+                };
+                
+                this.morseMapping = {
+                    0: '-----', 1: '.----', 2: '..---', 3: '...--', 4: '....-',
+                    5: '.....', 6: '-....', 7: '--...', 8: '---..', 9: '----.'
+                };
+                
+                this.romanMapping = {
+                    0: '', 1: 'I', 2: 'II', 3: 'III', 4: 'IV',
+                    5: 'V', 6: 'VI', 7: 'VII', 8: 'VIII', 9: 'IX'
+                };
+                
+                this.init();
+                this.generateNewPuzzle();
+                this.updateDisplay();
+                this.updateStats();
+            }
+            
+            init() {
+                // Mode selection
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelector('.mode-btn.active').classList.remove('active');
+                        e.target.classList.add('active');
+                        this.currentMode = e.target.dataset.mode;
+                        this.generateNewPuzzle();
+                        this.updateDisplay();
+                        this.updateHelpText();
+                        this.showingHints = false;
+                        document.getElementById('color-display').classList.remove('show-hints');
+                    });
+                });
+                
+                // Submit button
+                document.getElementById('submit-btn').addEventListener('click', () => {
+                    this.checkAnswer();
+                });
+                
+                // Hint button
+                document.getElementById('hint-btn').addEventListener('click', () => {
+                    this.showHint();
+                });
+                
+                // Reset button
+                document.getElementById('reset-btn').addEventListener('click', () => {
+                    this.generateNewPuzzle();
+                    this.updateDisplay();
+                    this.clearInputs();
+                    this.hideFeedback();
+                });
+                
+                // Enter key submission
+                document.querySelectorAll('.time-input').forEach(input => {
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            this.checkAnswer();
+                        }
+                    });
+                    
+                    input.addEventListener('input', (e) => {
+                        this.updateProgress();
+                    });
+                });
+                
+                this.updateHelpText();
+            }
+            
+            generateNewPuzzle() {
+                const now = new Date();
+                // Add some randomization to make it more challenging
+                const randomOffset = Math.floor(Math.random() * 86400); // Random seconds in a day
+                const puzzleTime = new Date(now.getTime() + randomOffset * 1000);
+                
+                this.currentTime = {
+                    hours: puzzleTime.getHours(),
+                    minutes: puzzleTime.getMinutes(),
+                    seconds: puzzleTime.getSeconds()
+                };
+            }
+            
+            updateDisplay() {
+                const display = document.getElementById('puzzle-display');
+                const colorDisplay = document.getElementById('color-display');
+                
+                // Hide all displays first
+                display.style.display = 'block';
+                colorDisplay.style.display = 'none';
+                
+                switch(this.currentMode) {
+                    case 'binary':
+                        display.innerHTML = this.getBinaryTime();
+                        break;
+                    case 'emoji':
+                        display.innerHTML = this.getEmojiTime();
+                        break;
+                    case 'color':
+                        display.style.display = 'none';
+                        colorDisplay.style.display = 'flex';
+                        this.displayColorTime();
+                        break;
+                    case 'morse':
+                        display.innerHTML = this.getMorseTime();
+                        break;
+                    case 'roman':
+                        display.innerHTML = this.getRomanTime();
+                        break;
+                }
+            }
+            
+            getBinaryTime() {
+                const h1 = Math.floor(this.currentTime.hours / 10);
+                const h2 = this.currentTime.hours % 10;
+                const m1 = Math.floor(this.currentTime.minutes / 10);
+                const m2 = this.currentTime.minutes % 10;
+                const s1 = Math.floor(this.currentTime.seconds / 10);
+                const s2 = this.currentTime.seconds % 10;
+                
+                return `
+                    <div class="binary-group">${this.toBinary(h1)} ${this.toBinary(h2)}</div>
+                    <div class="binary-group">${this.toBinary(m1)} ${this.toBinary(m2)}</div>
+                    <div class="binary-group">${this.toBinary(s1)} ${this.toBinary(s2)}</div>
+                `;
+            }
+            
+            getEmojiTime() {
+                const timeStr = this.formatTime();
+                return timeStr.split('').map(char => {
+                    if (char === ':') return '⏰';
+                    return this.emojiMapping[parseInt(char)] || char;
+                }).join(' ');
+            }
+            
+            displayColorTime() {
+                const colorDisplay = document.getElementById('color-display');
+                const timeStr = this.formatTime().replace(/:/g, '');
+                
+                colorDisplay.innerHTML = '';
+                timeStr.split('').forEach((digit, index) => {
+                    const block = document.createElement('div');
+                    block.className = 'color-block';
+                    block.style.backgroundColor = this.colorMapping[parseInt(digit)];
+                    block.dataset.value = digit;
+                    colorDisplay.appendChild(block);
+                });
+            }
+            
+            getMorseTime() {
+                const timeStr = this.formatTime();
+                return timeStr.split('').map(char => {
+                    if (char === ':') return ' / ';
+                    return this.morseMapping[parseInt(char)] || char;
+                }).join(' ');
+            }
+            
+            getRomanTime() {
+                const h = this.currentTime.hours;
+                const m = this.currentTime.minutes;
+                const s = this.currentTime.seconds;
+                
+                return `${this.toRoman(h)} : ${this.toRoman(m)} : ${this.toRoman(s)}`;
+            }
+            
+            toBinary(num) {
+                return num.toString(2).padStart(4, '0');
+            }
+            
+            toRoman(num) {
+                if (num === 0) return 'N';
+                if (num >= 60) return 'LX+';
+                
+                const romanNumerals = [
+                    {value: 50, symbol: 'L'},
+                    {value: 40, symbol: 'XL'},
+                    {value: 10, symbol: 'X'},
+                    {value: 9, symbol: 'IX'},
+                    {value: 5, symbol: 'V'},
+                    {value: 4, symbol: 'IV'},
+                    {value: 1, symbol: 'I'}
+                ];
+                
+                let result = '';
+                for (let {value, symbol} of romanNumerals) {
+                    while (num >= value) {
+                        result += symbol;
+                        num -= value;
+                    }
+                }
+                return result;
+            }
+            
+            formatTime() {
+                return `${this.currentTime.hours.toString().padStart(2, '0')}:${this.currentTime.minutes.toString().padStart(2, '0')}:${this.currentTime.seconds.toString().padStart(2, '0')}`;
+            }
+            
+            checkAnswer() {
+                const hours = parseInt(document.getElementById('hours').value) || 0;
+                const minutes = parseInt(document.getElementById('minutes').value) || 0;
+                const seconds = parseInt(document.getElementById('seconds').value) || 0;
+                
+                const isCorrect = hours === this.currentTime.hours && 
+                                minutes === this.currentTime.minutes && 
+                                seconds === this.currentTime.seconds;
+                
+                this.stats.totalAttempts++;
+                
+                if (isCorrect) {
+                    this.stats.correctAnswers++;
+                    this.stats.currentStreak++;
+                    this.stats.bestStreak = Math.max(this.stats.bestStreak, this.stats.currentStreak);
+                    this.showFeedback(`🎉 Correct! The time was ${this.formatTime()}`, 'success');
+                    document.querySelector('.container').classList.add('celebration');
+                    setTimeout(() => document.querySelector('.container').classList.remove('celebration'), 600);
+                } else {
+                    this.stats.currentStreak = 0;
+                    this.showFeedback(`❌ Wrong! The correct time was ${this.formatTime()}. Try again!`, 'error');
+                    document.querySelector('.clock-display').classList.add('pulse');
+                    setTimeout(() => document.querySelector('.clock-display').classList.remove('pulse'), 2000);
+                }
+                
+                this.updateStats();
+                this.saveStats();
+                this.updateProgress();
+            }
+            
+            showHint() {
+                this.showingHints = !this.showingHints;
+                
+                if (this.currentMode === 'color') {
+                    document.getElementById('color-display').classList.toggle('show-hints');
+                } else {
+                    const actualTime = this.formatTime();
+                    const hintText = this.showingHints ? 
+                        `💡 Hint: The actual time is ${actualTime}` : 
+                        '';
+                    
+                    if (hintText) {
+                        this.showFeedback(hintText, 'info');
+                    } else {
+                        this.hideFeedback();
+                    }
+                }
+            }
+            
+            showFeedback(message, type) {
+                const feedback = document.getElementById('feedback');
+                feedback.textContent = message;
+                feedback.className = `feedback ${type}`;
+                feedback.style.display = 'block';
+            }
+            
+            hideFeedback() {
+                document.getElementById('feedback').style.display = 'none';
+            }
+            
+            clearInputs() {
+                document.getElementById('hours').value = '';
+                document.getElementById('minutes').value = '';
+                document.getElementById('seconds').value = '';
+                this.updateProgress();
+            }
+            
+            updateProgress() {
+                const hours = document.getElementById('hours').value;
+                const minutes = document.getElementById('minutes').value;
+                const seconds = document.getElementById('seconds').value;
+                
+                let filled = 0;
+                if (hours) filled += 33.33;
+                if (minutes) filled += 33.33;
+                if (seconds) filled += 33.34;
+                
+                document.getElementById('progress-fill').style.width = `${filled}%`;
+            }
+            
+            updateStats() {
+                document.getElementById('correct-count').textContent = this.stats.correctAnswers;
+                document.getElementById('total-attempts').textContent = this.stats.totalAttempts;
+                document.getElementById('current-streak').textContent = this.stats.currentStreak;
+                
+                const accuracy = this.stats.totalAttempts > 0 ? 
+                    Math.round((this.stats.correctAnswers / this.stats.totalAttempts) * 100) : 0;
+                document.getElementById('accuracy-rate').textContent = `${accuracy}%`;
+            }
+            
+            updateHelpText() {
+                const helpContent = document.getElementById('help-content');
+                const helpTexts = {
+                    binary: '<strong>Binary Mode:</strong> Each digit (0-9) is shown in 4-bit binary. Decode each group to find hours, minutes, and seconds.',
+                    emoji: '<strong>Emoji Mode:</strong> Numbers are represented by clock emojis (🕐=0, 🕑=1, etc.) and ⏰ represents the colon separator.',
+                    color: '<strong>Color Mode:</strong> Each digit has a unique color. Hover over blocks to see hints when hint mode is active.',
+                    morse: '<strong>Morse Code Mode:</strong> Numbers are in Morse code (0=-----, 1=.----, etc.) with "/" separating time components.',
+                    roman: '<strong>Roman Mode:</strong> Time displayed in Roman numerals. "N" represents 0, numbers over 59 show as "LX+".'
+                };
+                helpContent.innerHTML = helpTexts[this.currentMode];
+            }
+            
+            loadStats() {
+                const defaultStats = {
+                    correctAnswers: 0,
+                    totalAttempts: 0,
+                    currentStreak: 0,
+                    bestStreak: 0
+                };
+                
+                // Using a simple variable instead of localStorage
+                return window.puzzleClockStats || defaultStats;
+            }
+            
+            saveStats() {
+                window.puzzleClockStats = this.stats;
+            }
+        }
+        
+        // Initialize the puzzle clock when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PuzzleClock();
+        });
+    </script>
+</body>
+</html>
