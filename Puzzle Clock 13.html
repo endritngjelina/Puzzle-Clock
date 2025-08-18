@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Clock - Advanced Time Decoder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat,
+                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+            animation: backgroundFloat 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(0.5deg); }
+        }
+
+        /* Floating particles effect */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(240, 147, 251, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 10%, rgba(255, 255, 255, 0.05) 0%, transparent 40%);
+            animation: particleFloat 15s ease-in-out infinite reverse;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes particleFloat {
+            0%, 100% { 
+                transform: translateX(0px) translateY(0px) scale(1);
+                opacity: 0.7;
+            }
+            33% { 
+                transform: translateX(10px) translateY(-5px) scale(1.05);
+                opacity: 0.9;
+            }
+            66% { 
+                transform: translateX(-5px) translateY(10px) scale(0.95);
+                opacity: 0.8;
+            }
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border-radius: 28px;
+            box-shadow: 
+                0 30px 60px rgba(0, 0, 0, 0.15),
+                0 10px 20px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            padding: 40px;
+            max-width: 1200px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .container:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 35px 70px rgba(0, 0, 0, 0.2),
+                0 15px 25px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+            background-size: 500% 100%;
+            animation: gradient 4s ease infinite;
+        }
+
+        .container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                linear-gradient(45deg, transparent 49%, rgba(255, 255, 255, 0.03) 50%, transparent 51%),
+                linear-gradient(-45deg, transparent 49%, rgba(255, 255, 255, 0.03) 50%, transparent 51%);
+            background-size: 20px 20px;
+            opacity: 0.5;
+            pointer-events: none;
+            animation: meshMove 30s linear infinite;
+        }
+
+        @keyframes meshMove {
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 20px 20px, -20px 20px; }
+        }
+
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: headerGlow 4s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes headerGlow {
+            0%, 100% { 
+                transform: translateX(-50%) scale(1);
+                opacity: 0.3;
+            }
+            50% { 
+                transform: translateX(-50%) scale(1.2);
+                opacity: 0.6;
+            }
+        }
+
+        .title {
+            font-size: 2.8em;
+            font-weight: 800;
+            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: -0.03em;
+            position: relative;
+            animation: gradientShift 4s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            font-weight: 400;
+            position: relative;
+            opacity: 0.8;
+            animation: subtitleFade 3s ease-in-out infinite;
+        }
+
+        @keyframes subtitleFade {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        .subtitle::after {
+            content: '✨';
+            position: absolute;
+            right: -30px;
+            top: 0;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg);
+                opacity: 0.7;
+            }
+            50% { 
+                transform: scale(1.2) rotate(180deg);
+                opacity: 1;
+            }
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .clock-section {
+            background: linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 24px;
+            padding: 35px;
+            position: relative;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .clock-section:hover {
+            transform: translateY(-1px);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .mode-selector {
+            display: flex;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+
+        .mode-btn {
+            padding: 14px 20px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            position: relative;
+            color: #4a5568;
+            z-index: 1;
+        }
+
+        .mode-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            z-index: -1;
+        }
+
+        .mode-btn:hover::before {
+            opacity: 0.1;
+        }
+
+        .mode-btn.active {
+            color: white;
+            transform: scale(1.02);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .mode-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+            transform: translateX(-50%);
+        }
+
+        .mode-btn:hover::after {
+            width: 80%;
+        }
+
+        .mode-btn.active::after {
+            width: 100%;
+        }
+
+        /* Enhanced mode button icons */
+        .mode-btn[data-mode="binary"]::before { content: '01'; }
+        .mode-btn[data-mode="emoji"]::before { content: '😀'; }
+        .mode-btn[data-mode="color"]::before { content: '🎨'; }
+        .mode-btn[data-mode="morse"]::before { content: '•-'; }
+        .mode-btn[data-mode="roman"]::before { content: 'Ⅰ'; }
+
+        .mode-btn::before {
+            margin-right: 8px;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn:hover::before {
+            transform: scale(1.2) rotate(5deg);
+        }
+
+        .difficulty-selector select {
+            padding: 14px 18px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+            color: #4a5568;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        .difficulty-selector select:hover {
+            border-color: rgba(102, 126, 234, 0.3);
+            box-shadow: 
+                0 6px 25px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+            transform: translateY(-1px);
+        }
+
+        .difficulty-selector select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.15),
+                0 6px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .puzzle-display {
+            background: 
+                linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+            backdrop-filter: blur(15px);
+            border-radius: 20px;
+            padding: 50px 40px;
+            text-align: center;
+            min-height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+        }
+
+        .puzzle-display:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .puzzle-display::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(
+                from 0deg, 
+                transparent, 
+                rgba(102, 126, 234, 0.03), 
+                transparent,
+                rgba(240, 147, 251, 0.03),
+                transparent
+            );
+            animation: rotate 25s linear infinite;
+            pointer-events: none;
+        }
+
+        .puzzle-display::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 6px;
+            height: 6px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: statusPulse 2s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { 
+                opacity: 0.6;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 1;
+                transform: scale(1.3);
+            }
+        }
+
+        /* Floating time elements */
+        .time-display {
+            position: relative;
+            z-index: 2;
+        }
+
+        .time-display::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(102, 126, 234, 0.2);
+            border-radius: 50%;
+            animation: orbit 8s linear infinite;
+        }
+
+        @keyframes orbit {
+            0% { 
+                transform: rotate(0deg) translateX(30px) rotate(0deg);
+                opacity: 0.3;
+            }
+            50% { opacity: 0.8; }
+            100% { 
+                transform: rotate(360deg) translateX(30px) rotate(-360deg);
+                opacity: 0.3;
+            }
+        }
+
+        .time-display {
+            font-size: 3.2em;
+            font-weight: 800;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            position: relative;
+            z-index: 1;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.320, 1);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .time-display:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0 4px 12px rgba(102, 126, 234, 0.2));
+        }
+
+        .binary-display {
+            font-size: 2em;
+            letter-spacing: 0.2em;
+            color: #2d3748;
+        }
+
+        .emoji-display {
+            font-size: 4em;
+            line-height: 1.2;
+        }
+
+        .color-display {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 18px;
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .color-block {
+            position: relative;
+        }
+
+        .color-block::after {
+            content: attr(data-digit);
+            position: absolute;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.7em;
+            font-weight: 600;
+            color: #666;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .color-block:hover::after {
+            opacity: 1;
+            bottom: -30px;
+        }
+
+        /* Enhanced binary display */
+        .binary-display {
+            font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.02) 100%);
+            padding: 20px;
+            border-radius: 12px;
+            position: relative;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .binary-display::before {
+            content: '{ BINARY MODE }';
+            position: absolute;
+            top: -8px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 12px;
+            font-size: 0.6em;
+            font-weight: 700;
+            color: #667eea;
+            letter-spacing: 0.1em;
+            border-radius: 4px;
+        }
+
+        .color-block {
+            width: 55px;
+            height: 55px;
+            border-radius: 16px;
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.15),
+                0 2px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            position: relative;
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .color-block::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .color-block:hover {
+            transform: translateY(-3px) scale(1.08);
+            box-shadow: 
+                0 12px 30px rgba(0, 0, 0, 0.2),
+                0 4px 8px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .color-block:hover::before {
+            opacity: 1;
+        }
+
+        .stats-section {
+            background: linear-gradient(145deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 24px;
+            padding: 35px;
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .stats-section:hover {
+            transform: translateY(-1px);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.12),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        .stat-item {
+            background: 
+                linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 22px 24px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 
+                0 4px 16px rgba(0, 0, 0, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateX(4px);
+            box-shadow: 
+                0 8px 24px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 1);
+        }
+
+        .stat-item:hover::before {
+            opacity: 1;
+        }
+
+        .stat-label {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .stats-section h3 {
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            padding-bottom: 10px;
+        }
+
+        .stats-section h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 1px;
+        }
+
+        .stat-value {
+            font-family: 'SF Mono', monospace;
+            position: relative;
+        }
+
+        .stat-value::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -15px;
+            width: 4px;
+            height: 4px;
+            background: #10b981;
+            border-radius: 50%;
+            transform: translateY(-50%);
+            animation: dataPoint 1.5s ease-in-out infinite;
+        }
+
+        @keyframes dataPoint {
+            0%, 100% { 
+                opacity: 0.4;
+                transform: translateY(-50%) scale(1);
+            }
+            50% { 
+                opacity: 1;
+                transform: translateY(-50%) scale(1.3);
+            }
+        }
+
+        .reveal-section {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .reveal-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            background-size: 200% 200%;
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 16px;
+            font-weight: 700;
+            font-size: 0.95em;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            margin-right: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 6px 20px rgba(102, 126, 234, 0.25),
+                0 2px 4px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .reveal-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .reveal-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 
+                0 10px 30px rgba(102, 126, 234, 0.35),
+                0 4px 8px rgba(0, 0, 0, 0.15);
+            background-position: 100% 0%;
+        }
+
+        .reveal-btn:hover::before {
+            left: 100%;
+        }
+
+        .reveal-btn:active {
+            transform: translateY(-1px) scale(1.01);
+        }
+
+        .normal-time {
+            font-size: 2.2em;
+            font-weight: 800;
+            color: #2d3748;
+            margin-top: 25px;
+            opacity: 0;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.320, 1);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .normal-time.show {
+            opacity: 1;
+            transform: scale(1.08) translateY(-5px);
+            filter: drop-shadow(0 4px 12px rgba(45, 55, 72, 0.2));
+        }
+
+        /* Enhanced mobile responsiveness */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+
+            .container {
+                padding: 25px;
+                margin: 15px;
+                border-radius: 24px;
+            }
+
+            .title {
+                font-size: 2.2em;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 20px;
+            }
+
+            .mode-selector {
+                width: 100%;
+            }
+
+            .mode-btn {
+                flex: 1;
+                text-align: center;
+                padding: 16px 12px;
+                font-size: 0.85em;
+            }
+
+            .time-display {
+                font-size: 2.5em;
+            }
+
+            .puzzle-display {
+                padding: 35px 25px;
+                min-height: 280px;
+            }
+
+            .color-block {
+                width: 45px;
+                height: 45px;
+            }
+
+            .reveal-btn {
+                padding: 14px 24px;
+                font-size: 0.9em;
+                margin-bottom: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .title {
+                font-size: 1.9em;
+            }
+
+            .time-display {
+                font-size: 2em;
+            }
+
+            .mode-btn {
+                padding: 12px 8px;
+                font-size: 0.8em;
+            }
+
+            .color-display {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 12px;
+            }
+
+            .color-block {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        /* Enhanced loading state */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #667eea;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* Focus states for accessibility */
+        .mode-btn:focus,
+        .reveal-btn:focus,
+        .difficulty-selector select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .container {
+                background: rgba(26, 32, 44, 0.95);
+                color: #e2e8f0;
+            }
+            
+            .clock-section,
+            .stats-section {
+                background: linear-gradient(145deg, #2d3748 0%, #4a5568 100%);
+            }
+            
+            .stat-item,
+            .puzzle-display {
+                background: linear-gradient(135deg, rgba(45, 55, 72, 0.9) 0%, rgba(74, 85, 104, 0.6) 100%);
+                color: #e2e8f0;
+            }
+        }
+
+        .hint {
+            background: 
+                linear-gradient(135deg, rgba(227, 242, 253, 0.9) 0%, rgba(227, 242, 253, 0.6) 100%);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(33, 150, 243, 0.3);
+            border-radius: 16px;
+            padding: 20px 24px;
+            margin-top: 20px;
+            color: #1976d2;
+            font-weight: 600;
+            font-size: 0.95em;
+            box-shadow: 
+                0 6px 24px rgba(33, 150, 243, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
+            animation: slideInHint 0.5s cubic-bezier(0.23, 1, 0.320, 1);
+        }
+
+        .hint::before {
+            content: '💡';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.2em;
+        }
+
+        .hint {
+            padding-left: 55px;
+        }
+
+        @keyframes slideInHint {
+            from { 
+                opacity: 0; 
+                transform: translateY(-20px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+
+        .achievement {
+            background: linear-gradient(135deg, #4caf50, #8bc34a, #cddc39);
+            background-size: 200% 200%;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            margin: 12px 0;
+            animation: slideInAchievement 0.6s cubic-bezier(0.23, 1, 0.320, 1);
+            box-shadow: 
+                0 6px 20px rgba(76, 175, 80, 0.3),
+                0 2px 4px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .achievement::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 2s ease-in-out;
+        }
+
+        @keyframes slideInAchievement {
+            from { 
+                transform: translateX(-100%) scale(0.8); 
+                opacity: 0; 
+            }
+            to { 
+                transform: translateX(0) scale(1); 
+                opacity: 1; 
+            }
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(233, 236, 239, 0.8);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 15px 0;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .progress-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            background-size: 200% 100%;
+            border-radius: 8px;
+            transition: width 0.6s cubic-bezier(0.23, 1, 0.320, 1);
+            position: relative;
+            animation: progressShimmer 3s ease-in-out infinite;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 6px 6px 0 0;
+        }
+
+        /* Advanced tooltip system */
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        .tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(-2px);
+            border: 4px solid transparent;
+            border-top-color: rgba(0, 0, 0, 0.9);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.23, 1, 0.320, 1);
+        }
+
+        .tooltip:hover::after,
+        .tooltip:hover::before {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Contextual success states */
+        .success-state {
+            animation: successPulse 0.6s ease-out;
+        }
+
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            }
+            100% { transform: scale(1); }
+        }
+
+        /* Error states */
+        .error-state {
+            animation: errorShake 0.5s ease-out;
+            border-color: #ef4444 !important;
+        }
+
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Skeleton loading states */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeletonLoading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        @keyframes skeletonLoading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Enhanced mobile touch targets */
+        @media (max-width: 768px) {
+            .mode-btn,
+            .reveal-btn,
+            .color-block {
+                min-height: 44px;
+                min-width: 44px;
+            }
+
+            .stat-item {
+                padding: 18px 20px;
+                margin-bottom: 12px;
+            }
+
+            .puzzle-display {
+                padding: 30px 20px;
+            }
+        }
+
+        .morse-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.8em;
+            letter-spacing: 0.3em;
+            color: #2d3748;
+            line-height: 1.8;
+        }
+
+        /* Interactive feedback elements */
+        .feedback-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9em;
+            z-index: 1000;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.320, 1);
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .feedback-toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .feedback-toast::before {
+            content: '✓';
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        /* Enhanced emoji display */
+        .emoji-display {
+            position: relative;
+            padding: 20px;
+        }
+
+        .emoji-display::before {
+            content: '{ EMOJI MODE }';
+            position: absolute;
+            top: -8px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 12px;
+            font-size: 0.6em;
+            font-weight: 700;
+            color: #f59e0b;
+            letter-spacing: 0.1em;
+            border-radius: 4px;
+        }
+
+        /* Enhanced morse display */
+        .morse-display {
+            background: linear-gradient(135deg, rgba(139, 69, 19, 0.05) 0%, rgba(139, 69, 19, 0.02) 100%);
+            padding: 20px;
+            border-radius: 12px;
+            position: relative;
+            border: 1px solid rgba(139, 69, 19, 0.1);
+        }
+
+        .morse-display::before {
+            content: '{ MORSE CODE }';
+            position: absolute;
+            top: -8px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 12px;
+            font-size: 0.6em;
+            font-weight: 700;
+            color: #dc2626;
+            letter-spacing: 0.1em;
+            border-radius: 4px;
+        }
+
+        /* Enhanced roman display */
+        .roman-display {
+            background: linear-gradient(135deg, rgba(139, 69, 19, 0.05) 0%, rgba(139, 69, 19, 0.02) 100%);
+            padding: 20px;
+            border-radius: 12px;
+            position: relative;
+            border: 1px solid rgba(139, 69, 19, 0.1);
+        }
+
+        .roman-display::before {
+            content: '{ ROMAN NUMERALS }';
+            position: absolute;
+            top: -8px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 12px;
+            font-size: 0.6em;
+            font-weight: 700;
+            color: #8b4513;
+            letter-spacing: 0.1em;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .title {
+                font-size: 2em;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .mode-selector {
+                width: 100%;
+            }
+
+            .mode-btn {
+                flex: 1;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Puzzle Clock</h1>
+            <p class="subtitle">Decode the time in cryptic formats - Challenge your mind daily</p>
+        </div>
+
+                    <div class="main-content">
+            <div class="clock-section">
+                <div class="controls">
+                    <div class="mode-selector">
+                        <button class="mode-btn active tooltip" data-mode="binary" data-tooltip="Binary time encoding">Binary</button>
+                        <button class="mode-btn tooltip" data-mode="emoji" data-tooltip="Emoji time display">Emoji</button>
+                        <button class="mode-btn tooltip" data-mode="color" data-tooltip="Color-coded time">Color</button>
+                        <button class="mode-btn tooltip" data-mode="morse" data-tooltip="Morse code format">Morse</button>
+                        <button class="mode-btn tooltip" data-mode="roman" data-tooltip="Roman numeral time">Roman</button>
+                    </div>
+                    
+                    <div class="difficulty-selector">
+                        <select id="difficulty" class="tooltip" data-tooltip="Adjust puzzle complexity">
+                            <option value="easy">Easy Mode</option>
+                            <option value="medium" selected>Medium Mode</option>
+                            <option value="hard">Hard Mode</option>
+                            <option value="expert">Expert Mode</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="puzzle-display" id="puzzleDisplay">
+                    <div class="time-display" id="timeDisplay"></div>
+                    <div class="hint" id="hintDisplay" style="display: none;"></div>
+                </div>
+
+                <div class="reveal-section">
+                    <button class="reveal-btn tooltip" id="revealBtn" data-tooltip="Show current time">Reveal Time</button>
+                    <button class="reveal-btn tooltip" id="hintBtn" data-tooltip="Get a helpful hint">Show Hint</button>
+                    <div class="normal-time" id="normalTime"></div>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <h3 style="margin-bottom: 20px; color: #2d3748;">Daily Stats</h3>
+                
+                <div class="stat-item tooltip" data-tooltip="Days in a row you've used the clock">
+                    <span class="stat-label">Streak</span>
+                    <span class="stat-value" id="streakCount">0</span>
+                </div>
+                
+                <div class="stat-item tooltip" data-tooltip="Times you revealed the answer today">
+                    <span class="stat-label">Reveals Used</span>
+                    <span class="stat-value" id="revealsUsed">0</span>
+                </div>
+                
+                <div class="stat-item tooltip" data-tooltip="Current puzzle encoding mode">
+                    <span class="stat-label">Current Mode</span>
+                    <span class="stat-value" id="currentMode">Binary</span>
+                </div>
+                
+                <div class="stat-item tooltip" data-tooltip="Your decoding accuracy percentage">
+                    <span class="stat-label">Accuracy</span>
+                    <span class="stat-value" id="accuracy">100%</span>
+                </div>
+
+                <div class="progress-bar tooltip" data-tooltip="Progress through today">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <small>Daily Challenge Progress</small>
+
+                <div id="achievements"></div>
+            </div>
+        </div>
+
+        <!-- Toast notification container -->
+        <div id="toastContainer"></div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <small>Daily Challenge Progress</small>
+
+                <div id="achievements"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class PuzzleClock {
+            constructor() {
+                this.currentMode = 'binary';
+                this.difficulty = 'medium';
+                this.stats = this.loadStats();
+                this.achievements = [];
+                this.hints = {
+                    binary: "Each digit is represented in 4-bit binary format (HHMM)",
+                    emoji: "🕐=1, 🕑=2... Clock faces represent hours, other emojis represent minutes",
+                    color: "Colors map to digits: Red=1, Blue=2, Green=3, Yellow=4, Purple=5, Orange=6...",
+                    morse: "Morse code: Dots and dashes represent each digit (H H M M)",
+                    roman: "Roman numerals: I=1, V=5, X=10, L=50, C=100, D=500, M=1000"
+                };
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.updateClock();
+                this.updateStats();
+                setInterval(() => this.updateClock(), 1000);
+                
+                // Update progress throughout the day
+                setInterval(() => this.updateProgress(), 60000);
+            }
+
+            setupEventListeners() {
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.setMode(e.target.dataset.mode);
+                    });
+                });
+
+                document.getElementById('difficulty').addEventListener('change', (e) => {
+                    // Add transition effect
+                    const puzzleDisplay = document.getElementById('puzzleDisplay');
+                    puzzleDisplay.style.transform = 'scale(0.95)';
+                    puzzleDisplay.style.opacity = '0.7';
+                    
+                    setTimeout(() => {
+                        this.difficulty = e.target.value;
+                        this.updateClock();
+                        this.showToast(`Difficulty set to ${e.target.value.toUpperCase()}`);
+                        
+                        // Restore display
+                        puzzleDisplay.style.transform = 'scale(1)';
+                        puzzleDisplay.style.opacity = '1';
+                    }, 200);
+                });
+
+                // Add keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) return;
+                    
+                    switch(e.key) {
+                        case '1': this.setMode('binary'); break;
+                        case '2': this.setMode('emoji'); break;
+                        case '3': this.setMode('color'); break;
+                        case '4': this.setMode('morse'); break;
+                        case '5': this.setMode('roman'); break;
+                        case 'r': case 'R': this.revealTime(); break;
+                        case 'h': case 'H': this.showHint(); break;
+                    }
+                });
+
+                // Add click effects to interactive elements
+                document.querySelectorAll('.mode-btn, .reveal-btn, .stat-item').forEach(el => {
+                    el.addEventListener('click', function() {
+                        this.style.transform = 'scale(0.95)';
+                        setTimeout(() => this.style.transform = '', 150);
+                    });
+                });
+
+                // Add color block interactions
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('color-block')) {
+                        const digit = e.target.dataset.digit;
+                        const index = e.target.dataset.index;
+                        this.showToast(`Position ${parseInt(index) + 1}: Digit ${digit}`);
+                        
+                        e.target.classList.add('success-state');
+                        setTimeout(() => e.target.classList.remove('success-state'), 600);
+                    }
+                });
+
+                document.getElementById('revealBtn').addEventListener('click', () => {
+                    this.revealTime();
+                });
+
+                document.getElementById('hintBtn').addEventListener('click', () => {
+                    this.showHint();
+                });
+            }
+
+            setMode(mode) {
+                this.currentMode = mode;
+                document.querySelectorAll('.mode-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+                document.getElementById('currentMode').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+                this.updateClock();
+                this.hideHint();
+            }
+
+            updateClock() {
+                const now = new Date();
+                const timeDisplay = document.getElementById('timeDisplay');
+                
+                // Add loading state
+                timeDisplay.parentElement.classList.add('loading');
+                
+                setTimeout(() => {
+                    let displayTime;
+                    switch(this.currentMode) {
+                        case 'binary':
+                            displayTime = this.toBinary(now);
+                            timeDisplay.className = 'time-display binary-display';
+                            break;
+                        case 'emoji':
+                            displayTime = this.toEmoji(now);
+                            timeDisplay.className = 'time-display emoji-display';
+                            break;
+                        case 'color':
+                            displayTime = this.toColor(now);
+                            timeDisplay.className = 'time-display';
+                            break;
+                        case 'morse':
+                            displayTime = this.toMorse(now);
+                            timeDisplay.className = 'time-display morse-display';
+                            break;
+                        case 'roman':
+                            displayTime = this.toRoman(now);
+                            timeDisplay.className = 'time-display roman-display';
+                            break;
+                    }
+                    
+                    if(this.currentMode === 'color') {
+                        timeDisplay.innerHTML = displayTime;
+                    } else {
+                        timeDisplay.textContent = displayTime;
+                    }
+                    
+                    // Remove loading state
+                    timeDisplay.parentElement.classList.remove('loading');
+                }, 100);
+            }
+
+            toBinary(date) {
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                
+                const h1 = Math.floor(hours / 10);
+                const h2 = hours % 10;
+                const m1 = Math.floor(minutes / 10);
+                const m2 = minutes % 10;
+                
+                if(this.difficulty === 'easy') {
+                    return `${h1.toString(2).padStart(4, '0')} ${h2.toString(2).padStart(4, '0')} : ${m1.toString(2).padStart(4, '0')} ${m2.toString(2).padStart(4, '0')}`;
+                } else if(this.difficulty === 'medium') {
+                    return `${h1.toString(2).padStart(4, '0')}${h2.toString(2).padStart(4, '0')}:${m1.toString(2).padStart(4, '0')}${m2.toString(2).padStart(4, '0')}`;
+                } else {
+                    return `${h1.toString(2).padStart(4, '0')}${h2.toString(2).padStart(4, '0')}${m1.toString(2).padStart(4, '0')}${m2.toString(2).padStart(4, '0')}`;
+                }
+            }
+
+            toEmoji(date) {
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                
+                const hourEmojis = ['🕛', '🕐', '🕑', '🕒', '🕓', '🕔', '🕕', '🕖', '🕗', '🕘', '🕙', '🕚'];
+                const digitEmojis = ['⭕', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+                
+                const h = hours > 12 ? hours - 12 : (hours === 0 ? 12 : hours);
+                const hourEmoji = hourEmojis[h];
+                
+                const m1 = Math.floor(minutes / 10);
+                const m2 = minutes % 10;
+                
+                if(this.difficulty === 'easy') {
+                    return `${hourEmoji} : ${digitEmojis[m1]}${digitEmojis[m2]}`;
+                } else if(this.difficulty === 'hard') {
+                    // Use more cryptic emojis
+                    const crypticEmojis = ['🌑', '🌒', '🌓', '🌔', '🌕', '🌖', '🌗', '🌘', '🌙', '⭐'];
+                    return `${crypticEmojis[Math.floor(hours/10)]}${crypticEmojis[hours%10]} ${crypticEmojis[m1]}${crypticEmojis[m2]}`;
+                } else {
+                    return `${hourEmoji}${digitEmojis[m1]}${digitEmojis[m2]}`;
+                }
+            }
+
+            toColor(date) {
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                const seconds = date.getSeconds();
+                
+                const colors = ['#000000', '#ff4757', '#2ed573', '#ffa502', '#3742fa', '#f368e0', '#ff6348', '#7bed9f', '#70a1ff', '#5352ed'];
+                
+                const digits = this.difficulty === 'expert' 
+                    ? [Math.floor(hours/10), hours%10, Math.floor(minutes/10), minutes%10, Math.floor(seconds/10), seconds%10]
+                    : [Math.floor(hours/10), hours%10, Math.floor(minutes/10), minutes%10];
+                
+                let html = '<div class="color-display">';
+                digits.forEach(digit => {
+                    html += `<div class="color-block" style="background-color: ${colors[digit]}"></div>`;
+                });
+                html += '</div>';
+                
+                return html;
+            }
+
+            toMorse(date) {
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                
+                const morseDigits = {
+                    '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+                    '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.'
+                };
+                
+                const timeStr = `${hours.toString().padStart(2, '0')}${minutes.toString().padStart(2, '0')}`;
+                
+                if(this.difficulty === 'easy') {
+                    return timeStr.split('').map(d => morseDigits[d]).join(' / ');
+                } else {
+                    return timeStr.split('').map(d => morseDigits[d]).join(' ');
+                }
+            }
+
+            toRoman(date) {
+                const hours = date.getHours();
+                const minutes = date.getMinutes();
+                
+                const toRomanNumeral = (num) => {
+                    const romanNumerals = [
+                        { value: 50, symbol: 'L' },
+                        { value: 40, symbol: 'XL' },
+                        { value: 10, symbol: 'X' },
+                        { value: 9, symbol: 'IX' },
+                        { value: 5, symbol: 'V' },
+                        { value: 4, symbol: 'IV' },
+                        { value: 1, symbol: 'I' }
+                    ];
+                    
+                    let result = '';
+                    for (let i = 0; i < romanNumerals.length; i++) {
+                        while (num >= romanNumerals[i].value) {
+                            result += romanNumerals[i].symbol;
+                            num -= romanNumerals[i].value;
+                        }
+                    }
+                    return result || 'N'; // N for zero/null
+                };
+                
+                if(this.difficulty === 'easy') {
+                    return `${toRomanNumeral(hours)} : ${toRomanNumeral(minutes)}`;
+                } else {
+                    return `${toRomanNumeral(hours)}${toRomanNumeral(minutes)}`;
+                }
+            }
+
+            revealTime() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+                const normalTimeEl = document.getElementById('normalTime');
+                
+                normalTimeEl.textContent = timeStr;
+                normalTimeEl.classList.add('show');
+                
+                // Add success animation to reveal button
+                document.getElementById('revealBtn').classList.add('success-state');
+                setTimeout(() => document.getElementById('revealBtn').classList.remove('success-state'), 600);
+                
+                this.stats.revealsUsed++;
+                this.updateStats();
+                this.saveStats();
+                
+                // Show toast
+                this.showToast(`Current time: ${timeStr}`);
+                
+                setTimeout(() => {
+                    normalTimeEl.classList.remove('show');
+                }, 5000);
+            }
+
+            showHint() {
+                const hintEl = document.getElementById('hintDisplay');
+                hintEl.textContent = this.hints[this.currentMode];
+                hintEl.style.display = 'block';
+                
+                // Add success animation to hint button
+                document.getElementById('hintBtn').classList.add('success-state');
+                setTimeout(() => document.getElementById('hintBtn').classList.remove('success-state'), 600);
+                
+                this.showToast('Hint revealed! Check below the puzzle.');
+            }
+
+            hideHint() {
+                const hintEl = document.getElementById('hintDisplay');
+                hintEl.style.display = 'none';
+            }
+
+            showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `feedback-toast ${type}`;
+                toast.textContent = message;
+                
+                const container = document.getElementById('toastContainer') || document.body;
+                container.appendChild(toast);
+                
+                // Trigger animation
+                setTimeout(() => toast.classList.add('show'), 100);
+                
+                // Remove after delay
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 400);
+                }, 3000);
+            }
+
+            updateStats() {
+                document.getElementById('streakCount').textContent = this.stats.streak;
+                document.getElementById('revealsUsed').textContent = this.stats.revealsUsed;
+                document.getElementById('accuracy').textContent = `${this.stats.accuracy}%`;
+                
+                this.updateProgress();
+                this.checkAchievements();
+            }
+
+            updateProgress() {
+                const now = new Date();
+                const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const msInDay = 24 * 60 * 60 * 1000;
+                const progress = ((now - startOfDay) / msInDay) * 100;
+                
+                document.getElementById('progressFill').style.width = `${progress}%`;
+            }
+
+            checkAchievements() {
+                const achievementsEl = document.getElementById('achievements');
+                
+                if(this.stats.streak >= 7 && !this.achievements.includes('week_streak')) {
+                    this.achievements.push('week_streak');
+                    this.showAchievement('🔥 Week Streak! 7 days of puzzle solving!');
+                }
+                
+                if(this.stats.revealsUsed === 0 && !this.achievements.includes('no_reveals')) {
+                    this.achievements.push('no_reveals');
+                    this.showAchievement('🧠 Mind Reader! No reveals used today!');
+                }
+
+                if(this.stats.streak >= 30 && !this.achievements.includes('month_streak')) {
+                    this.achievements.push('month_streak');
+                    this.showAchievement('🏆 Monthly Master! 30 days of dedication!');
+                }
+
+                if(this.stats.accuracy === 100 && this.stats.revealsUsed === 0 && !this.achievements.includes('perfect_day')) {
+                    this.achievements.push('perfect_day');
+                    this.showAchievement('⭐ Perfect Day! 100% accuracy with no reveals!');
+                }
+            }
+
+            showAchievement(text) {
+                const achievementEl = document.createElement('div');
+                achievementEl.className = 'achievement';
+                achievementEl.textContent = text;
+                
+                const container = document.getElementById('achievements');
+                container.appendChild(achievementEl);
+                
+                // Trigger sound effect simulation
+                this.playSuccessSound();
+                
+                // Show toast for achievement
+                this.showToast(text, 'achievement');
+                
+                setTimeout(() => {
+                    achievementEl.style.opacity = '0';
+                    achievementEl.style.transform = 'translateX(100%)';
+                    setTimeout(() => achievementEl.remove(), 500);
+                }, 5000);
+            }
+
+            playSuccessSound() {
+                // Create audio context for success sound
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                    oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                    oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                    
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                } catch (e) {
+                    console.log('Audio not supported');
+                }
+            }
+
+            loadStats() {
+                const saved = localStorage.getItem('puzzleClock_stats');
+                return saved ? JSON.parse(saved) : {
+                    streak: 0,
+                    revealsUsed: 0,
+                    accuracy: 100,
+                    lastVisit: null
+                };
+            }
+
+            saveStats() {
+                this.stats.lastVisit = new Date().toDateString();
+                localStorage.setItem('puzzleClock_stats', JSON.stringify(this.stats));
+            }
+        }
+
+        // Initialize the Puzzle Clock when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new PuzzleClock();
+        });
+    </script>
+</body>
+</html>
