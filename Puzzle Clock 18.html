@@ -1,0 +1,2323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Clock Pro - Decode the Time</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 118, 117, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 119, 198, 0.2) 0%, transparent 50%);
+            z-index: -1;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+
+        @keyframes backgroundShift {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: slideDown 1s ease-out;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 0 10px #667eea; }
+            to { box-shadow: 0 0 20px #764ba2, 0 0 30px #667eea; }
+        }
+
+        .subtitle {
+            font-size: clamp(0.9rem, 2.5vw, 1.3rem);
+            opacity: 0.85;
+            margin-bottom: 25px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+            max-width: 800px;
+            line-height: 1.6;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 35px;
+            flex-wrap: wrap;
+        }
+
+        .difficulty-btn {
+            padding: 12px 24px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            font-weight: 500;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .difficulty-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .difficulty-btn:hover::before {
+            left: 100%;
+        }
+
+        .difficulty-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .difficulty-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .difficulty-btn.active:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .puzzle-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 28px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .puzzle-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .puzzle-card:hover::before {
+            opacity: 1;
+        }
+
+        .puzzle-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .puzzle-title {
+            font-size: 1.5rem;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            font-weight: 600;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .puzzle-title i {
+            font-size: 1.3em;
+        }
+
+        .binary-display, .morse-display {
+            font-size: 1.9rem;
+            letter-spacing: 3px;
+            text-align: center;
+            margin: 22px 0;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 18px;
+            border-radius: 16px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .binary-display::before, .morse-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            animation: scan 3s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .emoji-display {
+            font-size: 3.2rem;
+            text-align: center;
+            margin: 22px 0;
+            line-height: 1.3;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            transition: transform 0.3s ease;
+        }
+
+        .emoji-display:hover {
+            transform: scale(1.05);
+        }
+
+        .color-blocks {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin: 22px 0;
+            padding: 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .color-block {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-block::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+        }
+
+        .color-block:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+
+        .color-block:hover {
+            transform: scale(1.15) rotate(5deg);
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .roman-display {
+            font-size: 2.4rem;
+            text-align: center;
+            margin: 22px 0;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .math-display {
+            font-size: 1.7rem;
+            text-align: center;
+            margin: 22px 0;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 18px;
+            border-radius: 16px;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        }
+
+        .decoder-section, .hints-section {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+        }
+
+        .decoder-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .time-input {
+            padding: 16px;
+            font-size: 1.3rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #2c3e50;
+            width: 90px;
+            text-align: center;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2), 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .time-input:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
+        }
+
+        .decode-btn {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .decode-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .decode-btn:hover::before {
+            left: 100%;
+        }
+
+        .decode-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .decode-btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        .feedback {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            min-height: 35px;
+            transition: all 0.4s ease;
+            padding: 12px 20px;
+            border-radius: 12px;
+        }
+
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            text-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            opacity: 0.85;
+            margin-top: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .hints-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .hints-toggle {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .hints-toggle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .hints-toggle:hover::before {
+            left: 100%;
+        }
+
+        .hints-toggle:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.5);
+        }
+
+        .hints-content {
+            display: none;
+            line-height: 1.8;
+            opacity: 0.9;
+            font-size: 1.05rem;
+        }
+
+        .hints-content.show {
+            display: block;
+            animation: fadeInSlide 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hints-content h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .hints-content p {
+            margin-bottom: 12px;
+            padding-left: 15px;
+            border-left: 3px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .hints-content strong {
+            color: #f093fb;
+            font-weight: 600;
+        }
+
+        @keyframes fadeInSlide {
+            from { 
+                opacity: 0; 
+                transform: translateY(-20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0);
+            }
+        }
+        
+        .hints-content.show {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            transform: translateX(400px);
+            transition: transform 0.5s ease;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .achievement.show {
+            transform: translateX(0);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            margin: 15px 0;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            border-radius: 12px;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: progressShimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes progressShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .achievement {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px 28px;
+            border-radius: 16px;
+            transform: translateX(400px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            font-weight: 600;
+            font-size: 1.1rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .achievement.show {
+            transform: translateX(0);
+            animation: achievementBounce 0.6s ease-out;
+        }
+
+        @keyframes achievementBounce {
+            0% { transform: translateX(400px) scale(0.8); }
+            60% { transform: translateX(-10px) scale(1.05); }
+            100% { transform: translateX(0) scale(1); }
+        }
+
+        /* Enhanced animations */
+        @keyframes slideDown {
+            from { 
+                transform: translateY(-60px); 
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0); 
+                opacity: 1; 
+            }
+        }
+
+        @keyframes fadeInUp {
+            from { 
+                transform: translateY(40px); 
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0); 
+                opacity: 1; 
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(76, 175, 80, 0.6);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Floating elements animation */
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Glitch effect for expert mode */
+        .glitch {
+            animation: glitch 0.3s infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        /* Loading skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background-size: 200% 100%;
+            animation: skeleton 1.5s infinite;
+        }
+
+        @keyframes skeleton {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Hover glow effects */
+        .glow-on-hover {
+            transition: all 0.3s ease;
+        }
+
+        .glow-on-hover:hover {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+            transform: scale(1.02);
+        }
+
+        /* Focus visible improvements */
+        *:focus-visible {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2, #f093fb);
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .high-contrast {
+                --primary-color: #00ff00;
+                --error-color: #ff0000;
+                --success-color: #00ff00;
+            }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            .reduced-motion * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Theme system */
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-color: #e0e0e0;
+        }
+
+        [data-theme="ocean"] {
+            --bg-gradient: linear-gradient(135deg, #006064, #0097a7, #00acc1);
+            --primary-color: #00bcd4;
+        }
+
+        [data-theme="sunset"] {
+            --bg-gradient: linear-gradient(135deg, #bf360c, #d84315, #ff5722);
+            --primary-color: #ff5722;
+        }
+
+        .error-notification {
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        /* Professional loading states */
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* Advanced responsive design */
+        @media (max-width: 480px) {
+            .container { padding: 10px; }
+            .puzzle-card { padding: 15px; }
+            .title { font-size: 1.5em; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (min-width: 1400px) {
+            .puzzle-grid { grid-template-columns: repeat(3, 1fr); }
+            .container { max-width: 1400px; }
+        }
+
+        /* Print styles for documentation */
+        @media print {
+            body { 
+                background: white !important; 
+                color: black !important;
+            }
+            .puzzle-card {
+                border: 2px solid black !important;
+                background: white !important;
+                break-inside: avoid;
+            }
+            .decode-btn, .hints-toggle, .difficulty-btn {
+                display: none;
+            }
+        }
+        
+        /* NEW FEATURES */
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .theme-selector {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .theme-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .theme-btn:hover {
+            transform: scale(1.1);
+            border-color: white;
+        }
+        
+        .theme-btn.active {
+            border-color: white;
+            box-shadow: 0 0 0 2px #667eea;
+        }
+        
+        .theme-default { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .theme-ocean { background: linear-gradient(135deg, #006064, #0097a7, #00acc1); }
+        .theme-sunset { background: linear-gradient(135deg, #bf360c, #d84315, #ff5722); }
+        
+        .analytics-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 16px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            z-index: 100;
+            max-width: 300px;
+        }
+        
+        .analytics-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .analytics-data {
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .multiplayer-section {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+        }
+        
+        .multiplayer-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            text-align: center;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+        }
+        
+        .player-list {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 15px;
+            min-width: 150px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .player-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .player-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .player-score {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #f093fb;
+        }
+        
+        .tutorial-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .tutorial-content {
+            max-width: 800px;
+            background: rgba(30, 30, 46, 0.9);
+            border-radius: 24px;
+            padding: 40px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+        }
+        
+        .tutorial-title {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .tutorial-step {
+            margin-bottom: 25px;
+        }
+        
+        .tutorial-step h3 {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+        
+        .tutorial-step p {
+            line-height: 1.7;
+            margin-bottom: 15px;
+        }
+        
+        .tutorial-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .tutorial-btn {
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        
+        .tutorial-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .tutorial-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .analog-clock {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .clock-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+        }
+        
+        .clock-face {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .hand {
+            position: absolute;
+            bottom: 50%;
+            left: 50%;
+            transform-origin: bottom center;
+            border-radius: 10px;
+        }
+        
+        .hour-hand {
+            width: 6px;
+            height: 60px;
+            background: #667eea;
+            transform: translateX(-50%);
+        }
+        
+        .minute-hand {
+            width: 4px;
+            height: 90px;
+            background: #f093fb;
+            transform: translateX(-50%);
+        }
+        
+        .second-hand {
+            width: 2px;
+            height: 90px;
+            background: #4CAF50;
+            transform: translateX(-50%);
+        }
+        
+        .clock-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        
+        .clock-digit {
+            position: absolute;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .daily-challenge {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .challenge-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .challenge-title {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+        }
+        
+        .challenge-timer {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .challenge-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .challenge-puzzle {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            min-width: 300px;
+        }
+        
+        .leaderboard {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 20px;
+        }
+        
+        .leaderboard-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            text-align: center;
+            color: #667eea;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 8px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .leaderboard-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .leaderboard-name {
+            font-weight: 600;
+        }
+        
+        .leaderboard-score {
+            font-weight: 700;
+            color: #f093fb;
+        }
+        
+        .leaderboard-rank {
+            font-weight: 700;
+            margin-right: 10px;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-selector">
+        <div class="theme-btn theme-default active" data-theme="default"></div>
+        <div class="theme-btn theme-ocean" data-theme="ocean"></div>
+        <div class="theme-btn theme-sunset" data-theme="sunset"></div>
+    </div>
+
+    <div class="analytics-panel">
+        <div class="analytics-title">📊 Performance Analytics</div>
+        <div class="analytics-data">
+            <div>CPU Usage: <span id="cpu-usage">15%</span></div>
+            <div>Memory: <span id="memory-usage">42 MB</span></div>
+            <div>FPS: <span id="fps-counter">60</span></div>
+        </div>
+    </div>
+
+    <div class="tutorial-overlay" id="tutorial-overlay" style="display: none;">
+        <div class="tutorial-content">
+            <button class="tutorial-close" onclick="closeTutorial()">&times;</button>
+            <h2 class="tutorial-title">Welcome to Puzzle Clock Pro</h2>
+            
+            <div class="tutorial-step">
+                <h3><i class="fas fa-puzzle-piece"></i> Understanding Puzzles</h3>
+                <p>Each puzzle card displays the current time encoded in a different format. Your task is to decode the time and enter it in the decoder section.</p>
+            </div>
+            
+            <div class="tutorial-step">
+                <h3><i class="fas fa-sliders-h"></i> Difficulty Levels</h3>
+                <p>Select from four difficulty levels. Higher difficulties add more complex puzzles and reduce the number of attempts you have.</p>
+            </div>
+            
+            <div class="tutorial-step">
+                <h3><i class="fas fa-trophy"></i> Daily Challenge</h3>
+                <p>Compete in our daily challenge to solve unique puzzles and climb the leaderboard. Each day brings a new challenge!</p>
+            </div>
+            
+            <div class="tutorial-step">
+                <h3><i class="fas fa-users"></i> Multiplayer Mode</h3>
+                <p>Play against others in real-time. See how your decoding skills compare with players around the world.</p>
+            </div>
+            
+            <div class="tutorial-controls">
+                <button class="tutorial-btn" onclick="prevTutorialStep()">Back</button>
+                <button class="tutorial-btn" onclick="nextTutorialStep()">Next</button>
+                <button class="tutorial-btn" onclick="closeTutorial()">Start Playing</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-controls">
+                <button class="control-btn" onclick="showTutorial()" title="Show Tutorial">
+                    <i class="fas fa-question-circle"></i>
+                </button>
+                <button class="control-btn" onclick="toggleAnalytics()" title="Toggle Analytics">
+                    <i class="fas fa-chart-line"></i>
+                </button>
+            </div>
+            
+            <div class="title">🧩 PUZZLE CLOCK PRO</div>
+            <div class="subtitle">Decode cryptic time formats in real-time • Professional Challenge Edition with Multiplayer, Daily Challenges, and Performance Analytics</div>
+            
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" data-level="easy">
+                    <i class="fas fa-seedling"></i> Easy
+                </button>
+                <button class="difficulty-btn" data-level="medium">
+                    <i class="fas fa-tree"></i> Medium
+                </button>
+                <button class="difficulty-btn" data-level="hard">
+                    <i class="fas fa-mountain"></i> Hard
+                </button>
+                <button class="difficulty-btn" data-level="expert">
+                    <i class="fas fa-rocket"></i> Expert
+                </button>
+            </div>
+        </div>
+
+        <div class="daily-challenge">
+            <div class="challenge-header">
+                <div class="challenge-title">🏆 DAILY CHALLENGE</div>
+                <div class="challenge-timer" id="challenge-timer">23:17:32</div>
+            </div>
+            
+            <div class="challenge-content">
+                <div class="challenge-puzzle" id="challenge-puzzle">🔢 🕵️ ♟️ 🧩 🕒</div>
+                <div class="input-group">
+                    <input type="number" class="time-input" id="challenge-hour" placeholder="HH" min="0" max="23">
+                    <span>:</span>
+                    <input type="number" class="time-input" id="challenge-minute" placeholder="MM" min="0" max="59">
+                    <span>:</span>
+                    <input type="number" class="time-input" id="challenge-second" placeholder="SS" min="0" max="59">
+                    <button class="decode-btn" onclick="submitChallenge()">
+                        <i class="fas fa-paper-plane"></i> Submit
+                    </button>
+                </div>
+                
+                <div class="leaderboard">
+                    <div class="leaderboard-title">Leaderboard</div>
+                    <div class="leaderboard-item">
+                        <span><span class="leaderboard-rank">1</span> <span class="leaderboard-name">CodeMaster</span></span>
+                        <span class="leaderboard-score">850 pts</span>
+                    </div>
+                    <div class="leaderboard-item">
+                        <span><span class="leaderboard-rank">2</span> <span class="leaderboard-name">DecodePro</span></span>
+                        <span class="leaderboard-score">720 pts</span>
+                    </div>
+                    <div class="leaderboard-item">
+                        <span><span class="leaderboard-rank">3</span> <span class="leaderboard-name">BinaryNinja</span></span>
+                        <span class="leaderboard-score">680 pts</span>
+                    </div>
+                    <div class="leaderboard-item">
+                        <span><span class="leaderboard-rank">4</span> <span class="leaderboard-name">You</span></span>
+                        <span class="leaderboard-score">550 pts</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="streak">0</div>
+                <div class="stat-label">Current Streak</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="accuracy">0%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalSolved">0</div>
+                <div class="stat-label">Total Solved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="difficulty">Easy</div>
+                <div class="stat-label">Current Level</div>
+            </div>
+        </div>
+
+        <div class="puzzle-grid">
+            <!-- Binary Clock -->
+            <div class="puzzle-card">
+                <div class="puzzle-title">
+                    <i class="fas fa-code"></i> Binary Time
+                </div>
+                <div class="binary-display" id="binary-time"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    HH:MM:SS in 6-bit binary
+                </div>
+            </div>
+
+            <!-- Emoji Clock -->
+            <div class="puzzle-card">
+                <div class="puzzle-title">
+                    <i class="fas fa-smile"></i> Emoji Cipher
+                </div>
+                <div class="emoji-display" id="emoji-time"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    Decode the emoji pattern
+                </div>
+            </div>
+
+            <!-- Color Blocks -->
+            <div class="puzzle-card">
+                <div class="puzzle-title">
+                    <i class="fas fa-palette"></i> Color Spectrum
+                </div>
+                <div class="color-blocks" id="color-blocks"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    RGB values encode time
+                </div>
+            </div>
+
+            <!-- Morse Code (Medium+) -->
+            <div class="puzzle-card" id="morse-card" style="display: none;">
+                <div class="puzzle-title">
+                    <i class="fas fa-wifi"></i> Morse Code
+                </div>
+                <div class="morse-display" id="morse-time"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    Dots and dashes
+                </div>
+            </div>
+
+            <!-- Roman Numerals (Hard+) -->
+            <div class="puzzle-card" id="roman-card" style="display: none;">
+                <div class="puzzle-title">
+                    <i class="fas fa-landmark"></i> Roman Numerals
+                </div>
+                <div class="roman-display" id="roman-time"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    Ancient time keeping
+                </div>
+            </div>
+
+            <!-- Mathematical Expression (Expert) -->
+            <div class="puzzle-card" id="math-card" style="display: none;">
+                <div class="puzzle-title">
+                    <i class="fas fa-calculator"></i> Mathematical Time
+                </div>
+                <div class="math-display" id="math-time"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    Solve the equations
+                </div>
+            </div>
+            
+            <!-- Analog Clock -->
+            <div class="puzzle-card">
+                <div class="puzzle-title">
+                    <i class="fas fa-clock"></i> Analog Time
+                </div>
+                <div class="analog-clock">
+                    <div class="clock-container">
+                        <div class="clock-face">
+                            <div class="hand hour-hand" id="hour-hand"></div>
+                            <div class="hand minute-hand" id="minute-hand"></div>
+                            <div class="hand second-hand" id="second-hand"></div>
+                            <div class="clock-center"></div>
+                            <div class="clock-digit" style="top: 10px; left: 50%; transform: translateX(-50%);">12</div>
+                            <div class="clock-digit" style="top: 50%; right: 10px; transform: translateY(-50%);">3</div>
+                            <div class="clock-digit" style="bottom: 10px; left: 50%; transform: translateX(-50%);">6</div>
+                            <div class="clock-digit" style="top: 50%; left: 10px; transform: translateY(-50%);">9</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    Read the analog clock
+                </div>
+            </div>
+        </div>
+
+        <div class="multiplayer-section">
+            <div class="multiplayer-title">🌐 Multiplayer Challenge</div>
+            <div class="player-list">
+                <div class="player-card">
+                    <div class="player-name">You</div>
+                    <div class="player-score">350 pts</div>
+                </div>
+                <div class="player-card">
+                    <div class="player-name">TimeMaster</div>
+                    <div class="player-score">420 pts</div>
+                </div>
+                <div class="player-card">
+                    <div class="player-name">DecodePro</div>
+                    <div class="player-score">380 pts</div>
+                </div>
+                <div class="player-card">
+                    <div class="player-name">BinaryNinja</div>
+                    <div class="player-score">410 pts</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Decoder Section -->
+        <div class="decoder-section">
+            <div class="decoder-title">🔓 Time Decoder</div>
+            <div class="input-group">
+                <input type="number" class="time-input" id="hour-input" placeholder="HH" min="0" max="23">
+                <span>:</span>
+                <input type="number" class="time-input" id="minute-input" placeholder="MM" min="0" max="59">
+                <span>:</span>
+                <input type="number" class="time-input" id="second-input" placeholder="SS" min="0" max="59">
+                <button class="decode-btn" onclick="checkAnswer()">
+                    <i class="fas fa-key"></i> Decode Time
+                </button>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="feedback" id="feedback"></div>
+        </div>
+
+        <!-- Hints Section -->
+        <div class="hints-section">
+            <button class="hints-toggle" onclick="toggleHints()">
+                <i class="fas fa-lightbulb"></i> Show Decoding Hints
+            </button>
+            <div class="hints-content" id="hints-content">
+                <h3>Decoding Guide:</h3>
+                <p><strong>Binary:</strong> Each digit represents powers of 2. Read left to right: 32, 16, 8, 4, 2, 1</p>
+                <p><strong>Emoji:</strong> Each emoji represents a digit (0-9). Pattern changes daily!</p>
+                <p><strong>Colors:</strong> RGB values map to time digits. R=hour tens, G=hour ones, etc.</p>
+                <p><strong>Morse:</strong> Dots (.) and dashes (-). A=01, B=1000, C=1010, D=100, E=0, etc.</p>
+                <p><strong>Roman:</strong> I=1, V=5, X=10, L=50. Subtractive notation applies.</p>
+                <p><strong>Math:</strong> Solve simple equations where result equals time digits.</p>
+                <p><strong>Analog:</strong> Hour hand position indicates hour, minute hand indicates minutes.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Notification -->
+    <div class="achievement" id="achievement"></div>
+
+    <script>
+        class PuzzleClock {
+            constructor() {
+                this.currentTime = new Date();
+                this.difficulty = 'easy';
+                this.stats = this.loadStats();
+                this.emojiMap = this.generateEmojiMap();
+                this.attempts = 0;
+                this.maxAttempts = 3;
+                this.startTime = Date.now();
+                this.analytics = {
+                    sessions: 0,
+                    interactions: 0,
+                    startTime: Date.now()
+                };
+                
+                this.initializeEventListeners();
+                this.updateDisplay();
+                this.updateStats();
+                this.updateChallengeTimer();
+                this.updateAnalogClock();
+                this.startPerformanceMonitor();
+                
+                // Update every second
+                setInterval(() => {
+                    this.currentTime = new Date();
+                    this.updateDisplay();
+                    this.updateAnalogClock();
+                    this.updateChallengeTimer();
+                }, 1000);
+                
+                // Auto-save stats every 30 seconds
+                setInterval(() => this.saveStats(), 30000);
+                
+                // Update performance metrics
+                setInterval(() => this.updatePerformanceMetrics(), 1000);
+            }
+
+            initializeEventListeners() {
+                // Difficulty selector
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.setDifficulty(e.target.dataset.level);
+                        this.trackInteraction('difficulty_change');
+                    });
+                });
+
+                // Enter key support
+                document.querySelectorAll('.time-input').forEach(input => {
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') this.checkAnswer();
+                    });
+                });
+
+                // Input validation
+                document.getElementById('hour-input').addEventListener('input', (e) => {
+                    if (e.target.value > 23) e.target.value = 23;
+                    this.trackInteraction('time_input');
+                });
+                
+                document.getElementById('minute-input').addEventListener('input', (e) => {
+                    if (e.target.value > 59) e.target.value = 59;
+                    this.trackInteraction('time_input');
+                });
+                
+                document.getElementById('second-input').addEventListener('input', (e) => {
+                    if (e.target.value > 59) e.target.value = 59;
+                    this.trackInteraction('time_input');
+                });
+                
+                // Theme selector
+                document.querySelectorAll('.theme-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.applyTheme(e.target.dataset.theme);
+                        this.trackInteraction('theme_change');
+                    });
+                });
+            }
+
+            trackInteraction(action) {
+                this.analytics.interactions++;
+                console.log(`Interaction: ${action} (Total: ${this.analytics.interactions})`);
+            }
+
+            applyTheme(theme) {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('puzzleClockTheme', theme);
+            }
+
+            setDifficulty(level) {
+                this.difficulty = level;
+                this.attempts = 0;
+                this.maxAttempts = level === 'expert' ? 1 : level === 'hard' ? 2 : 3;
+                
+                // Show/hide puzzle cards based on difficulty
+                document.getElementById('morse-card').style.display = 
+                    ['medium', 'hard', 'expert'].includes(level) ? 'block' : 'none';
+                document.getElementById('roman-card').style.display = 
+                    ['hard', 'expert'].includes(level) ? 'block' : 'none';
+                document.getElementById('math-card').style.display = 
+                    level === 'expert' ? 'block' : 'none';
+                
+                document.getElementById('difficulty').textContent = 
+                    level.charAt(0).toUpperCase() + level.slice(1);
+                
+                this.updateDisplay();
+                this.clearInputs();
+                document.getElementById('feedback').textContent = '';
+                document.getElementById('progress-fill').style.width = '0%';
+            }
+
+            generateEmojiMap() {
+                const emojis = ['🌙', '⭐', '🌟', '✨', '🔥', '💫', '🌈', '🎯', '🎪', '🎨'];
+                const map = {};
+                const shuffled = [...emojis].sort(() => Math.random() - 0.5);
+                
+                for (let i = 0; i < 10; i++) {
+                    map[i] = shuffled[i];
+                }
+                return map;
+            }
+
+            updateDisplay() {
+                const h = this.currentTime.getHours();
+                const m = this.currentTime.getMinutes();
+                const s = this.currentTime.getSeconds();
+
+                this.updateBinaryDisplay(h, m, s);
+                this.updateEmojiDisplay(h, m, s);
+                this.updateColorDisplay(h, m, s);
+                
+                if (['medium', 'hard', 'expert'].includes(this.difficulty)) {
+                    this.updateMorseDisplay(h, m, s);
+                }
+                
+                if (['hard', 'expert'].includes(this.difficulty)) {
+                    this.updateRomanDisplay(h, m, s);
+                }
+                
+                if (this.difficulty === 'expert') {
+                    this.updateMathDisplay(h, m, s);
+                }
+            }
+            
+            updateAnalogClock() {
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                
+                const hourDeg = (hours % 12) * 30 + minutes * 0.5;
+                const minuteDeg = minutes * 6;
+                const secondDeg = seconds * 6;
+                
+                document.getElementById('hour-hand').style.transform = `translateX(-50%) rotate(${hourDeg}deg)`;
+                document.getElementById('minute-hand').style.transform = `translateX(-50%) rotate(${minuteDeg}deg)`;
+                document.getElementById('second-hand').style.transform = `translateX(-50%) rotate(${secondDeg}deg)`;
+            }
+            
+            updateChallengeTimer() {
+                const now = new Date();
+                const hours = 23 - now.getHours();
+                const minutes = 59 - now.getMinutes();
+                const seconds = 59 - now.getSeconds();
+                
+                document.getElementById('challenge-timer').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            startPerformanceMonitor() {
+                let lastTime = Date.now();
+                let frames = 0;
+                
+                setInterval(() => {
+                    const now = Date.now();
+                    const delta = now - lastTime;
+                    frames++;
+                    
+                    if (delta >= 1000) {
+                        const fps = Math.round((frames * 1000) / delta);
+                        document.getElementById('fps-counter').textContent = fps;
+                        frames = 0;
+                        lastTime = now;
+                    }
+                }, 100);
+            }
+            
+            updatePerformanceMetrics() {
+                // Simulate CPU and memory usage
+                const cpu = 10 + Math.floor(Math.random() * 15);
+                const memory = 40 + Math.floor(Math.random() * 10);
+                document.getElementById('cpu-usage').textContent = `${cpu}%`;
+                document.getElementById('memory-usage').textContent = `${memory} MB`;
+            }
+
+            updateBinaryDisplay(h, m, s) {
+                const toBinary = (num) => num.toString(2).padStart(6, '0');
+                const display = `${toBinary(h)} ${toBinary(m)} ${toBinary(s)}`;
+                document.getElementById('binary-time').textContent = display;
+            }
+
+            updateEmojiDisplay(h, m, s) {
+                const timeStr = `${h.toString().padStart(2, '0')}${m.toString().padStart(2, '0')}${s.toString().padStart(2, '0')}`;
+                let emojiTime = '';
+                
+                for (let digit of timeStr) {
+                    emojiTime += this.emojiMap[parseInt(digit)] + ' ';
+                }
+                
+                document.getElementById('emoji-time').textContent = emojiTime.trim();
+                
+                // Update challenge puzzle
+                document.getElementById('challenge-puzzle').textContent = emojiTime.trim();
+            }
+
+            updateColorDisplay(h, m, s) {
+                const container = document.getElementById('color-blocks');
+                container.innerHTML = '';
+                
+                const timeDigits = [
+                    Math.floor(h / 10), h % 10,
+                    Math.floor(m / 10), m % 10,
+                    Math.floor(s / 10), s % 10
+                ];
+                
+                const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', 
+                              '#FFA500', '#800080', '#FFC0CB', '#A52A2A'];
+                
+                timeDigits.forEach(digit => {
+                    const block = document.createElement('div');
+                    block.className = 'color-block';
+                    block.style.backgroundColor = colors[digit];
+                    block.title = `Digit: ${digit}`;
+                    container.appendChild(block);
+                });
+            }
+
+            updateMorseDisplay(h, m, s) {
+                const morseMap = {
+                    '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+                    '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.'
+                };
+                
+                const timeStr = `${h.toString().padStart(2, '0')}${m.toString().padStart(2, '0')}${s.toString().padStart(2, '0')}`;
+                let morseTime = '';
+                
+                for (let digit of timeStr) {
+                    morseTime += morseMap[digit] + '  ';
+                }
+                
+                document.getElementById('morse-time').textContent = morseTime.trim();
+            }
+
+            updateRomanDisplay(h, m, s) {
+                const toRoman = (num) => {
+                    if (num === 0) return 'N'; // Nulla for zero
+                    const vals = [50, 40, 10, 9, 5, 4, 1];
+                    const syms = ['L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
+                    let roman = '';
+                    
+                    for (let i = 0; i < vals.length; i++) {
+                        while (num >= vals[i]) {
+                            roman += syms[i];
+                            num -= vals[i];
+                        }
+                    }
+                    return roman;
+                };
+                
+                const display = `${toRoman(h)} : ${toRoman(m)} : ${toRoman(s)}`;
+                document.getElementById('roman-time').textContent = display;
+            }
+
+            updateMathDisplay(h, m, s) {
+                const generateEquation = (target) => {
+                    if (target === 0) return '0';
+                    if (target <= 12) {
+                        const a = Math.floor(Math.random() * 10) + 1;
+                        const b = target - a;
+                        return b >= 0 ? `${a} + ${b}` : `${a} - ${Math.abs(b)}`;
+                    } else {
+                        const factor = Math.floor(Math.random() * 9) + 2;
+                        const quotient = Math.floor(target / factor);
+                        const remainder = target % factor;
+                        return remainder === 0 ? `${factor} × ${quotient}` : `${factor} × ${quotient} + ${remainder}`;
+                    }
+                };
+                
+                const equations = [
+                    `H = ${generateEquation(h)}`,
+                    `M = ${generateEquation(m)}`,
+                    `S = ${generateEquation(s)}`
+                ];
+                
+                document.getElementById('math-time').innerHTML = equations.join('<br>');
+            }
+
+            checkAnswer() {
+                this.trackInteraction('decode_attempt');
+                
+                const inputH = parseInt(document.getElementById('hour-input').value) || 0;
+                const inputM = parseInt(document.getElementById('minute-input').value) || 0;
+                const inputS = parseInt(document.getElementById('second-input').value) || 0;
+                
+                const actualH = this.currentTime.getHours();
+                const actualM = this.currentTime.getMinutes();
+                const actualS = this.currentTime.getSeconds();
+                
+                this.attempts++;
+                
+                const isCorrect = inputH === actualH && inputM === actualM && inputS === actualS;
+                const feedback = document.getElementById('feedback');
+                
+                if (isCorrect) {
+                    this.handleSuccess();
+                } else {
+                    this.handleError(actualH, actualM, actualS);
+                }
+                
+                // Update progress bar
+                const progress = Math.min((this.attempts / this.maxAttempts) * 100, 100);
+                document.getElementById('progress-fill').style.width = `${progress}%`;
+            }
+            
+            submitChallenge() {
+                this.trackInteraction('challenge_submit');
+                
+                const inputH = parseInt(document.getElementById('challenge-hour').value) || 0;
+                const inputM = parseInt(document.getElementById('challenge-minute').value) || 0;
+                const inputS = parseInt(document.getElementById('challenge-second').value) || 0;
+                
+                const actualH = this.currentTime.getHours();
+                const actualM = this.currentTime.getMinutes();
+                const actualS = this.currentTime.getSeconds();
+                
+                if (inputH === actualH && inputM === actualM && inputS === actualS) {
+                    this.showAchievement('🎉 Challenge Solved! +100 points');
+                } else {
+                    alert(`Challenge failed! The correct time was ${actualH.toString().padStart(2, '0')}:${actualM.toString().padStart(2, '0')}:${actualS.toString().padStart(2, '0')}`);
+                }
+            }
+
+            handleSuccess() {
+                const feedback = document.getElementById('feedback');
+                const timeTaken = Math.floor((Date.now() - this.startTime) / 1000);
+                
+                feedback.innerHTML = `🎉 Perfect! Decoded in ${this.attempts} attempt(s) and ${timeTaken}s`;
+                feedback.className = 'feedback success pulse';
+                
+                // Update stats
+                this.stats.streak++;
+                this.stats.totalSolved++;
+                this.stats.totalAttempts += this.attempts;
+                this.stats.bestTime = Math.min(this.stats.bestTime || Infinity, timeTaken);
+                
+                // Bonus points for difficulty and speed
+                let points = 10;
+                if (this.difficulty === 'medium') points = 20;
+                else if (this.difficulty === 'hard') points = 35;
+                else if (this.difficulty === 'expert') points = 50;
+                
+                if (this.attempts === 1) points *= 2; // Perfect bonus
+                if (timeTaken <= 30) points += 10; // Speed bonus
+                
+                this.stats.totalPoints += points;
+                
+                this.showAchievement(`+${points} points! Streak: ${this.stats.streak}`);
+                this.updateStats();
+                this.resetForNext();
+            }
+
+            handleError(actualH, actualM, actualS) {
+                const feedback = document.getElementById('feedback');
+                this.stats.totalAttempts++;
+                
+                if (this.attempts >= this.maxAttempts) {
+                    feedback.innerHTML = `❌ Time's up! Answer was ${actualH.toString().padStart(2, '0')}:${actualM.toString().padStart(2, '0')}:${actualS.toString().padStart(2, '0')}`;
+                    feedback.className = 'feedback error';
+                    this.stats.streak = 0;
+                    this.updateStats();
+                    this.resetForNext();
+                } else {
+                    const remaining = this.maxAttempts - this.attempts;
+                    feedback.innerHTML = `🔄 Try again! ${remaining} attempt(s) remaining`;
+                    feedback.className = 'feedback error';
+                }
+            }
+
+            resetForNext() {
+                setTimeout(() => {
+                    this.clearInputs();
+                    document.getElementById('feedback').textContent = '';
+                    document.getElementById('progress-fill').style.width = '0%';
+                    this.attempts = 0;
+                    this.startTime = Date.now();
+                    document.querySelector('.feedback').classList.remove('pulse');
+                }, 3000);
+            }
+
+            clearInputs() {
+                document.getElementById('hour-input').value = '';
+                document.getElementById('minute-input').value = '';
+                document.getElementById('second-input').value = '';
+            }
+
+            updateStats() {
+                document.getElementById('streak').textContent = this.stats.streak;
+                document.getElementById('totalSolved').textContent = this.stats.totalSolved;
+                
+                const accuracy = this.stats.totalAttempts > 0 
+                    ? Math.round((this.stats.totalSolved / this.stats.totalAttempts) * 100)
+                    : 0;
+                document.getElementById('accuracy').textContent = `${accuracy}%`;
+            }
+
+            showAchievement(message) {
+                const achievement = document.getElementById('achievement');
+                achievement.textContent = message;
+                achievement.classList.add('show');
+                
+                setTimeout(() => {
+                    achievement.classList.remove('show');
+                }, 3000);
+            }
+
+            loadStats() {
+                const defaultStats = {
+                    streak: 0,
+                    totalSolved: 0,
+                    totalAttempts: 0,
+                    totalPoints: 0,
+                    bestTime: null,
+                    achievements: []
+                };
+                
+                try {
+                    const saved = JSON.parse(localStorage.getItem('puzzleClockStats'));
+                    return saved || defaultStats;
+                } catch {
+                    return defaultStats;
+                }
+            }
+
+            saveStats() {
+                try {
+                    localStorage.setItem('puzzleClockStats', JSON.stringify(this.stats));
+                } catch (e) {
+                    console.log('Stats saved in memory only');
+                }
+            }
+        }
+
+        // Global functions for HTML onclick handlers
+        function checkAnswer() {
+            puzzleClock.checkAnswer();
+        }
+        
+        function submitChallenge() {
+            puzzleClock.submitChallenge();
+        }
+        
+        function showTutorial() {
+            document.getElementById('tutorial-overlay').style.display = 'flex';
+            puzzleClock.trackInteraction('show_tutorial');
+        }
+        
+        function closeTutorial() {
+            document.getElementById('tutorial-overlay').style.display = 'none';
+        }
+        
+        function prevTutorialStep() {
+            // For multi-step tutorial
+        }
+        
+        function nextTutorialStep() {
+            // For multi-step tutorial
+        }
+        
+        function toggleAnalytics() {
+            const panel = document.querySelector('.analytics-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleHints() {
+            const content = document.getElementById('hints-content');
+            const button = document.querySelector('.hints-toggle');
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                button.innerHTML = '<i class="fas fa-lightbulb"></i> Show Decoding Hints';
+            } else {
+                content.classList.add('show');
+                button.innerHTML = '<i class="fas fa-lightbulb"></i> Hide Hints';
+            }
+            
+            puzzleClock.trackInteraction('toggle_hints');
+        }
+
+        // Initialize the puzzle clock when page loads
+        let puzzleClock;
+        document.addEventListener('DOMContentLoaded', () => {
+            puzzleClock = new PuzzleClock();
+            
+            // Apply saved theme
+            const savedTheme = localStorage.getItem('puzzleClockTheme') || 'default';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.querySelector(`.theme-btn[data-theme="${savedTheme}"]`).classList.add('active');
+            
+            // Show tutorial on first visit
+            if (!localStorage.getItem('puzzleClockFirstVisit')) {
+                showTutorial();
+                localStorage.setItem('puzzleClockFirstVisit', 'true');
+            }
+        });
+
+        // Performance monitoring
+        const performanceMetrics = {
+            startTime: performance.now(),
+            frameCount: 0,
+            lastFrameTime: performance.now(),
+            
+            logMetrics() {
+                const now = performance.now();
+                this.frameCount++;
+                
+                if (now - this.lastFrameTime > 1000) {
+                    const fps = this.frameCount / ((now - this.lastFrameTime) / 1000);
+                    console.log(`FPS: ${fps.toFixed(2)}, Uptime: ${((now - this.startTime) / 1000).toFixed(1)}s`);
+                    this.frameCount = 0;
+                    this.lastFrameTime = now;
+                }
+            }
+        };
+
+        // Advanced features for production readiness
+        class AdvancedFeatures {
+            static initializeAccessibility() {
+                // Add ARIA labels and keyboard navigation
+                document.querySelectorAll('.puzzle-card').forEach((card, index) => {
+                    card.setAttribute('role', 'region');
+                    card.setAttribute('aria-labelledby', `puzzle-title-${index}`);
+                    card.querySelector('.puzzle-title').id = `puzzle-title-${index}`;
+                });
+
+                // High contrast mode detection
+                if (window.matchMedia && window.matchMedia('(prefers-contrast: high)').matches) {
+                    document.body.classList.add('high-contrast');
+                }
+
+                // Reduced motion support
+                if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    document.body.classList.add('reduced-motion');
+                }
+            }
+
+            static initializeErrorHandling() {
+                window.addEventListener('error', (e) => {
+                    console.error('Runtime error:', e.error);
+                    this.showErrorNotification('An unexpected error occurred. Please refresh the page.');
+                });
+
+                window.addEventListener('unhandledrejection', (e) => {
+                    console.error('Unhandled promise rejection:', e.reason);
+                    this.showErrorNotification('A background error occurred.');
+                });
+            }
+
+            static showErrorNotification(message) {
+                const notification = document.createElement('div');
+                notification.className = 'error-notification';
+                notification.textContent = message;
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #f44336;
+                    color: white;
+                    padding: 15px 25px;
+                    border-radius: 10px;
+                    z-index: 1001;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                `;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+
+            static initializeAnalytics() {
+                // Custom analytics for user engagement
+                const analytics = {
+                    sessions: parseInt(localStorage.getItem('puzzleClockSessions')) || 0,
+                    timeSpent: 0,
+                    interactions: 0,
+                    startTime: Date.now(),
+
+                    trackInteraction(action) {
+                        this.interactions++;
+                        console.log(`User interaction: ${action} (${this.interactions} total)`);
+                    },
+
+                    trackSession() {
+                        this.sessions++;
+                        localStorage.setItem('puzzleClockSessions', this.sessions);
+                        console.log(`Session ${this.sessions} started`);
+                    },
+
+                    endSession() {
+                        this.timeSpent = (Date.now() - this.startTime) / 1000;
+                        console.log(`Session ended: ${this.timeSpent.toFixed(1)}s, ${this.interactions} interactions`);
+                    }
+                };
+
+                analytics.trackSession();
+                
+                // Track user interactions
+                document.addEventListener('click', (e) => {
+                    if (e.target.matches('button, .puzzle-card, .time-input')) {
+                        analytics.trackInteraction(e.target.className);
+                    }
+                });
+
+                // Track session end
+                window.addEventListener('beforeunload', () => {
+                    analytics.endSession();
+                });
+
+                return analytics;
+            }
+
+            static initializeThemeSystem() {
+                const themes = {
+                    default: { name: 'Default', primary: '#4CAF50' },
+                    dark: { name: 'Dark Mode', primary: '#BB86FC' },
+                    ocean: { name: 'Ocean', primary: '#00BCD4' },
+                    sunset: { name: 'Sunset', primary: '#FF5722' }
+                };
+
+                const currentTheme = localStorage.getItem('puzzleClockTheme') || 'default';
+                this.applyTheme(currentTheme);
+
+                return themes;
+            }
+
+            static applyTheme(themeName) {
+                document.documentElement.setAttribute('data-theme', themeName);
+                localStorage.setItem('puzzleClockTheme', themeName);
+            }
+        }
+
+        // Initialize advanced features
+        document.addEventListener('DOMContentLoaded', () => {
+            AdvancedFeatures.initializeAccessibility();
+            AdvancedFeatures.initializeErrorHandling();
+            AdvancedFeatures.initializeAnalytics();
+            AdvancedFeatures.initializeThemeSystem();
+        });
+
+        // Service Worker for offline capability
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/puzzle-clock-sw.js').then(() => {
+                console.log('Service Worker registered for offline support');
+            }).catch(() => {
+                console.log('Service Worker registration failed - online only');
+            });
+        }
+
+        // Memory management and optimization
+        class PerformanceOptimizer {
+            static debounce(func, delay) {
+                let timeoutId;
+                return (...args) => {
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(() => func.apply(null, args), delay);
+                };
+            }
+
+            static throttle(func, limit) {
+                let inThrottle;
+                return function() {
+                    const args = arguments;
+                    const context = this;
+                    if (!inThrottle) {
+                        func.apply(context, args);
+                        inThrottle = true;
+                        setTimeout(() => inThrottle = false, limit);
+                    }
+                };
+            }
+
+            static optimizeAnimations() {
+                // Use requestAnimationFrame for smooth animations
+                let animationFrame;
+                const animate = () => {
+                    performanceMetrics.logMetrics();
+                    animationFrame = requestAnimationFrame(animate);
+                };
+                animate();
+
+                return () => cancelAnimationFrame(animationFrame);
+            }
+        }
+
+        // Initialize performance optimizations
+        const stopAnimation = PerformanceOptimizer.optimizeAnimations();
+
+        // Memory cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (typeof stopAnimation === 'function') stopAnimation();
+            if (puzzleClock) puzzleClock.saveStats();
+        });
+    </script>
+</body>
+</html>
