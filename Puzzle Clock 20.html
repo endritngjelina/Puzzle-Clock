@@ -1,0 +1,2900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Clock - Decode the Time</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --error-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.85);
+            --shadow-primary: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.4);
+            --border-radius-sm: 12px;
+            --border-radius-md: 20px;
+            --border-radius-lg: 28px;
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-smooth: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #0a0a0f;
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: 
+                radial-gradient(ellipse at top, #1e3a8a 0%, transparent 50%),
+                radial-gradient(ellipse at bottom, #7c3aed 0%, transparent 50%),
+                radial-gradient(ellipse at left, #dc2626 0%, transparent 50%),
+                radial-gradient(ellipse at right, #059669 0%, transparent 50%);
+            opacity: 0.15;
+            z-index: -2;
+            animation: backgroundPulse 30s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(255, 255, 255, 0.01) 2px,
+                    rgba(255, 255, 255, 0.01) 4px
+                );
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        @keyframes backgroundPulse {
+            0%, 100% { opacity: 0.15; transform: scale(1); }
+            33% { opacity: 0.25; transform: scale(1.05); }
+            66% { opacity: 0.1; transform: scale(0.95); }
+        }
+
+        /* Particle animation background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 20s infinite linear;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) translateX(0px); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-10vh) translateX(50px); opacity: 0; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: clamp(16px, 4vw, 32px);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Enhanced glass morphism utility classes */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-border);
+        }
+
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(40px) saturate(200%);
+            -webkit-backdrop-filter: blur(40px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .glass-subtle {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Advanced animation utility classes */
+        .animate-in {
+            animation: slideInUp 0.6s var(--transition-bounce) forwards;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .animate-in-delayed {
+            animation: slideInUp 0.6s var(--transition-bounce) 0.2s forwards;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        .animate-scale {
+            transition: transform var(--transition-smooth);
+        }
+
+        .animate-scale:hover {
+            transform: scale(1.02);
+        }
+
+        .animate-lift {
+            transition: all var(--transition-smooth);
+        }
+
+        .animate-lift:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Interactive state classes */
+        .interactive {
+            cursor: pointer;
+            user-select: none;
+            transition: all var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .interactive::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .interactive:hover::before {
+            left: 100%;
+        }
+
+        .interactive:active {
+            transform: scale(0.98);
+        }
+
+        /* Gradient text utility */
+        .gradient-text {
+            background: var(--primary-gradient);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% 200%;
+            animation: gradientShift 4s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Loading and skeleton states */
+        .skeleton-pulse {
+            background: linear-gradient(90deg, 
+                rgba(255,255,255,0.05) 25%, 
+                rgba(255,255,255,0.1) 50%, 
+                rgba(255,255,255,0.05) 75%);
+            background-size: 200% 100%;
+            animation: skeletonWave 2s infinite ease-in-out;
+        }
+
+        @keyframes skeletonWave {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Status indicator classes */
+        .status-indicator {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-indicator::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: statusPulse 2s infinite;
+        }
+
+        .status-success::before {
+            background: #10b981;
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        }
+
+        .status-error::before {
+            background: #ef4444;
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+        }
+
+        .status-warning::before {
+            background: #f59e0b;
+            box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+        }
+
+        @keyframes statusPulse {
+            0% { box-shadow: 0 0 0 0 currentColor; }
+            70% { box-shadow: 0 0 0 10px transparent; }
+            100% { box-shadow: 0 0 0 0 transparent; }
+        }
+
+        /* Enhanced button system */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 28px;
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            user-select: none;
+            box-shadow: var(--shadow-primary);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--secondary-gradient);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--glass-border);
+            color: var(--text-primary);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        /* Enhanced form controls */
+        .input-enhanced {
+            padding: 16px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--border-radius-md);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            font-family: 'SF Mono', 'Monaco', monospace;
+            font-size: 1.2rem;
+            font-weight: 600;
+            transition: all var(--transition-smooth);
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .input-enhanced:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 0 0 3px rgba(102, 126, 234, 0.2),
+                inset 0 2px 4px rgba(0, 0, 0, 0.1),
+                0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        .input-enhanced::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 400;
+        }
+
+        /* Card enhancement system */
+        .card-enhanced {
+            background: var(--glass-bg);
+            border-radius: var(--border-radius-lg);
+            padding: clamp(20px, 4vw, 32px);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            transition: all var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: opacity var(--transition-smooth);
+        }
+
+        .card-enhanced:hover::before {
+            opacity: 1;
+        }
+
+        .card-enhanced:hover {
+            transform: translateY(-6px) scale(1.01);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 
+                0 25px 60px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Typography system */
+        .text-gradient {
+            background: var(--primary-gradient);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 20px currentColor;
+        }
+
+        .text-large {
+            font-size: clamp(2rem, 5vw, 4rem);
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .text-medium {
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-weight: 600;
+        }
+
+        .text-small {
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            font-weight: 500;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: clamp(30px, 6vw, 50px);
+            position: relative;
+            z-index: 2;
+        }
+
+        .title {
+            font-size: clamp(2.5rem, 7vw, 4.5rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 300% 300%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+            position: relative;
+            animation: titleGlow 6s ease-in-out infinite, gradientMove 8s ease infinite;
+            letter-spacing: -0.02em;
+        }
+
+        .title::before {
+            content: '🧩 PUZZLE CLOCK';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: blur(20px);
+            z-index: -1;
+            animation: titlePulse 4s ease-in-out infinite;
+        }
+
+        .title::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: clamp(80px, 15vw, 150px);
+            height: 4px;
+            background: linear-gradient(90deg, transparent, #667eea, #764ba2, #f093fb, transparent);
+            border-radius: 2px;
+            animation: underlineGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(102, 126, 234, 0.3)); }
+            50% { filter: drop-shadow(0 0 40px rgba(240, 147, 251, 0.5)); }
+        }
+
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { opacity: 0.3; transform: scale(1.02); }
+            50% { opacity: 0.6; transform: scale(1.05); }
+        }
+
+        @keyframes underlineGlow {
+            from { box-shadow: 0 0 10px rgba(102, 126, 234, 0.5); }
+            to { box-shadow: 0 0 30px rgba(240, 147, 251, 0.8), 0 0 50px rgba(102, 126, 234, 0.4); }
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 2.5vw, 1.4rem);
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+            position: relative;
+        }
+
+        .subtitle::before {
+            content: '✨';
+            margin-right: 8px;
+            animation: sparkle 2s ease-in-out infinite;
+        }
+
+        .subtitle::after {
+            content: '✨';
+            margin-left: 8px;
+            animation: sparkle 2s ease-in-out infinite 1s;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0.4; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .difficulty-selector {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(8px, 2vw, 16px);
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--border-radius-lg);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .difficulty-btn {
+            padding: clamp(10px, 2vw, 16px) clamp(16px, 4vw, 28px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: clamp(0.85rem, 2vw, 1.1rem);
+            position: relative;
+            overflow: hidden;
+            transition: all var(--transition-smooth);
+            backdrop-filter: blur(10px);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .difficulty-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+            transition: left 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .difficulty-btn::after {
+            content: attr(data-level);
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            background: transparent;
+            border-radius: 50%;
+            transition: all var(--transition-smooth);
+            opacity: 0;
+        }
+
+        .difficulty-btn:hover::before {
+            left: 100%;
+        }
+
+        .difficulty-btn:hover {
+            transform: translateY(-4px) scale(1.05);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .difficulty-btn.active {
+            background: var(--primary-gradient);
+            border-color: transparent;
+            color: white;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 
+                0 8px 32px rgba(102, 126, 234, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .difficulty-btn.active::after {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.8);
+            animation: activeIndicator 2s ease infinite;
+        }
+
+        .difficulty-btn.active:hover {
+            transform: translateY(-4px) scale(1.08);
+            box-shadow: 
+                0 12px 40px rgba(102, 126, 234, 0.6),
+                0 0 0 1px rgba(255, 255, 255, 0.3);
+        }
+
+        @keyframes activeIndicator {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; }
+        }
+
+        /* Difficulty level indicators */
+        .difficulty-btn[data-level="easy"] {
+            --indicator-color: #10b981;
+        }
+
+        .difficulty-btn[data-level="medium"] {
+            --indicator-color: #f59e0b;
+        }
+
+        .difficulty-btn[data-level="hard"] {
+            --indicator-color: #ef4444;
+        }
+
+        .difficulty-btn[data-level="expert"] {
+            --indicator-color: #8b5cf6;
+        }
+
+        .difficulty-btn:hover {
+            border-color: var(--indicator-color, rgba(255, 255, 255, 0.4));
+        }
+
+        .difficulty-btn.active {
+            background: linear-gradient(135deg, var(--indicator-color), color-mix(in srgb, var(--indicator-color) 80%, white));
+        }
+
+        .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .puzzle-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 28px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .puzzle-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .puzzle-card:hover::before {
+            opacity: 1;
+        }
+
+        .puzzle-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .puzzle-title {
+            font-size: 1.5rem;
+            margin-bottom: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .binary-display, .morse-display {
+            font-size: 1.9rem;
+            letter-spacing: 3px;
+            text-align: center;
+            margin: 22px 0;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 18px;
+            border-radius: 16px;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .binary-display::before, .morse-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            animation: scan 3s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .emoji-display {
+            font-size: 3.2rem;
+            text-align: center;
+            margin: 22px 0;
+            line-height: 1.3;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+            transition: transform 0.3s ease;
+        }
+
+        .emoji-display:hover {
+            transform: scale(1.05);
+        }
+
+        .color-blocks {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin: 22px 0;
+            padding: 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .color-block {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-block::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+        }
+
+        .color-block:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+
+        .color-block:hover {
+            transform: scale(1.15) rotate(5deg);
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .roman-display {
+            font-size: 2.4rem;
+            text-align: center;
+            margin: 22px 0;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .math-display {
+            font-size: 1.7rem;
+            text-align: center;
+            margin: 22px 0;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 18px;
+            border-radius: 16px;
+            line-height: 1.6;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+        }
+
+        .decoder-section, .hints-section {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+        }
+
+        .decoder-title {
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 600;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .time-input {
+            padding: 16px;
+            font-size: 1.3rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #2c3e50;
+            width: 90px;
+            text-align: center;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .time-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2), 0 4px 20px rgba(0, 0, 0, 0.15);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .time-input:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
+        }
+
+        .decode-btn {
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 600;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .decode-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .decode-btn:hover::before {
+            left: 100%;
+        }
+
+        .decode-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .decode-btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        .feedback {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            min-height: 35px;
+            transition: all 0.4s ease;
+            padding: 12px 20px;
+            border-radius: 12px;
+        }
+
+        .success {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+        }
+
+        .error {
+            background: rgba(244, 67, 54, 0.2);
+            color: #f44336;
+            border: 1px solid rgba(244, 67, 54, 0.3);
+            text-shadow: 0 0 10px rgba(244, 67, 54, 0.3);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            opacity: 0.85;
+            margin-top: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .hints-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+        }
+
+        .hints-toggle {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hints-toggle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .hints-toggle:hover::before {
+            left: 100%;
+        }
+
+        .hints-toggle:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.5);
+        }
+
+        .hints-content {
+            display: none;
+            line-height: 1.8;
+            opacity: 0.9;
+            font-size: 1.05rem;
+        }
+
+        .hints-content.show {
+            display: block;
+            animation: fadeInSlide 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hints-content h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .hints-content p {
+            margin-bottom: 12px;
+            padding-left: 15px;
+            border-left: 3px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .hints-content strong {
+            color: #f093fb;
+            font-weight: 600;
+        }
+
+        @keyframes fadeInSlide {
+            from { 
+                opacity: 0; 
+                transform: translateY(-20px);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0);
+            }
+        }
+
+        .hints-content.show {
+            display: block;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4CAF50;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            transform: translateX(400px);
+            transition: transform 0.5s ease;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .achievement.show {
+            transform: translateX(0);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            margin: 15px 0;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            border-radius: 12px;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: progressShimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes progressShimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .achievement {
+            position: fixed;
+            top: 25px;
+            right: 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px 28px;
+            border-radius: 16px;
+            transform: translateX(400px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            font-weight: 600;
+            font-size: 1.1rem;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .achievement.show {
+            transform: translateX(0);
+            animation: achievementBounce 0.6s ease-out;
+        }
+
+        @keyframes achievementBounce {
+            0% { transform: translateX(400px) scale(0.8); }
+            60% { transform: translateX(-10px) scale(1.05); }
+            100% { transform: translateX(0) scale(1); }
+        }
+
+        /* Enhanced animations */
+        @keyframes slideDown {
+            from { 
+                transform: translateY(-60px); 
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0); 
+                opacity: 1; 
+            }
+        }
+
+        @keyframes fadeInUp {
+            from { 
+                transform: translateY(40px); 
+                opacity: 0;
+            }
+            to { 
+                transform: translateY(0); 
+                opacity: 1; 
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+            }
+            50% { 
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(76, 175, 80, 0.6);
+            }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Floating elements animation */
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Glitch effect for expert mode */
+        .glitch {
+            animation: glitch 0.3s infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        /* Loading skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background-size: 200% 100%;
+            animation: skeleton 1.5s infinite;
+        }
+
+        @keyframes skeleton {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Hover glow effects */
+        .glow-on-hover {
+            transition: all 0.3s ease;
+        }
+
+        .glow-on-hover:hover {
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+            transform: scale(1.02);
+        }
+
+        /* Focus visible improvements */
+        *:focus-visible {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2, #f093fb);
+        }
+
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            .high-contrast {
+                --primary-color: #00ff00;
+                --error-color: #ff0000;
+                --success-color: #00ff00;
+            }
+        }
+
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            .reduced-motion * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Theme system */
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-color: #e0e0e0;
+        }
+
+        [data-theme="ocean"] {
+            --bg-gradient: linear-gradient(135deg, #006064, #0097a7, #00acc1);
+            --primary-color: #00bcd4;
+        }
+
+        [data-theme="sunset"] {
+            --bg-gradient: linear-gradient(135deg, #bf360c, #d84315, #ff5722);
+            --primary-color: #ff5722;
+        }
+
+        .error-notification {
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        /* Professional loading states */
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* Advanced responsive design */
+        @media (max-width: 480px) {
+            .container { padding: 10px; }
+            .puzzle-card { padding: 15px; }
+            .title { font-size: 1.5em; }
+            .stats { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (min-width: 1400px) {
+            .puzzle-grid { grid-template-columns: repeat(3, 1fr); }
+            .container { max-width: 1400px; }
+        }
+
+        /* Print styles for documentation */
+        @media print {
+            body { 
+                background: white !important; 
+                color: black !important;
+            }
+            .puzzle-card {
+                border: 2px solid black !important;
+                background: white !important;
+                break-inside: avoid;
+            }
+            .decode-btn, .hints-toggle, .difficulty-btn {
+                display: none;
+            }
+        }
+                .puzzle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(clamp(300px, 40vw, 400px), 1fr));
+            gap: clamp(20px, 4vw, 35px);
+            margin-bottom: 40px;
+            perspective: 1000px;
+        }
+
+        .puzzle-card {
+            background: var(--glass-bg);
+            border-radius: var(--border-radius-lg);
+            padding: clamp(24px, 5vw, 35px);
+            backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            transition: all var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            animation: cardEntrance 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+            transform: translateY(50px) rotateX(15deg);
+        }
+
+        .puzzle-card:nth-child(1) { animation-delay: 0.1s; }
+        .puzzle-card:nth-child(2) { animation-delay: 0.2s; }
+        .puzzle-card:nth-child(3) { animation-delay: 0.3s; }
+        .puzzle-card:nth-child(4) { animation-delay: 0.4s; }
+        .puzzle-card:nth-child(5) { animation-delay: 0.5s; }
+        .puzzle-card:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes cardEntrance {
+            to {
+                opacity: 1;
+                transform: translateY(0) rotateX(0deg);
+            }
+        }
+
+        .puzzle-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #4facfe);
+            background-size: 300% 100%;
+            opacity: 0;
+            transition: opacity var(--transition-smooth);
+            animation: gradientFlow 4s ease infinite;
+        }
+
+        @keyframes gradientFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .puzzle-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity var(--transition-smooth);
+            pointer-events: none;
+        }
+
+        .puzzle-card:hover::before {
+            opacity: 1;
+        }
+
+        .puzzle-card:hover::after {
+            opacity: 1;
+        }
+
+        .puzzle-card:hover {
+            transform: translateY(-8px) rotateX(5deg) scale(1.02);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 
+                0 25px 80px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .puzzle-title {
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 200% 200%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            font-weight: 700;
+            position: relative;
+            animation: titleShimmer 3s ease infinite;
+        }
+
+        .puzzle-title::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, currentColor, transparent);
+            opacity: 0.3;
+        }
+
+        @keyframes titleShimmer {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* Enhanced display components */
+        .display-container {
+            position: relative;
+            margin: 22px 0;
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+        }
+
+        .binary-display, .morse-display, .math-display {
+            font-size: clamp(1.4rem, 3vw, 2rem);
+            letter-spacing: clamp(2px, 0.5vw, 4px);
+            text-align: center;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.6);
+            padding: clamp(16px, 3vw, 24px);
+            border-radius: var(--border-radius-md);
+            font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .binary-display::before, .morse-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(102, 126, 234, 0.2), 
+                rgba(118, 75, 162, 0.2),
+                transparent);
+            animation: dataStream 4s linear infinite;
+        }
+
+        @keyframes dataStream {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .emoji-display {
+            font-size: clamp(2.5rem, 6vw, 3.8rem);
+            text-align: center;
+            margin: 22px 0;
+            line-height: 1.4;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+            transition: all var(--transition-smooth);
+            cursor: default;
+        }
+
+        .emoji-display:hover {
+            transform: scale(1.05) rotateY(5deg);
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4)) brightness(1.1);
+        }
+
+        .color-blocks {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: clamp(8px, 2vw, 12px);
+            margin: 22px 0;
+            padding: clamp(16px, 3vw, 24px);
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: var(--border-radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .color-block {
+            aspect-ratio: 1;
+            min-height: 40px;
+            border-radius: var(--border-radius-sm);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all var(--transition-smooth);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .color-block::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            opacity: 0;
+            transition: all var(--transition-smooth);
+        }
+
+        .color-block:hover::before {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        .color-block:hover {
+            transform: scale(1.2) rotate(8deg) translateY(-4px);
+            border-color: #667eea;
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.4),
+                0 0 0 3px rgba(102, 126, 234, 0.3);
+            z-index: 10;
+        }
+
+        .roman-display {
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            text-align: center;
+            margin: 22px 0;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
+            background-size: 200% 200%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 2px 8px rgba(240, 147, 251, 0.3));
+            animation: romanGlow 4s ease infinite;
+            font-family: 'Times New Roman', serif;
+        }
+
+        @keyframes romanGlow {
+            0%, 100% { 
+                background-position: 0% 50%; 
+                filter: drop-shadow(0 2px 8px rgba(240, 147, 251, 0.3));
+            }
+            50% { 
+                background-position: 100% 50%; 
+                filter: drop-shadow(0 4px 16px rgba(245, 87, 108, 0.5));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">🧩 PUZZLE CLOCK</div>
+            <div class="subtitle">Decode the cryptic time formats • Professional Challenge Edition</div>
+            
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" data-level="easy">Easy</button>
+                <button class="difficulty-btn" data-level="medium">Medium</button>
+                <button class="difficulty-btn" data-level="hard">Hard</button>
+                <button class="difficulty-btn" data-level="expert">Expert</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="streak">0</div>
+                <div class="stat-label">Current Streak</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="accuracy">0%</div>
+                <div class="stat-label">Accuracy</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalSolved">0</div>
+                <div class="stat-label">Total Solved</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="difficulty">Easy</div>
+                <div class="stat-label">Current Level</div>
+            </div>
+        </div>
+
+        <div class="puzzle-grid">
+            <!-- Binary Clock -->
+            <div class="puzzle-card">
+                <div class="puzzle-title">Binary Time</div>
+                <div class="binary-display" id="binary-time"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    HH:MM:SS in 6-bit binary
+                </div>
+            </div>
+
+            <!-- Emoji Clock -->
+            <div class="puzzle-card">
+                <div class="puzzle-title">Emoji Cipher</div>
+                <div class="emoji-display" id="emoji-time"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    Decode the emoji pattern
+                </div>
+            </div>
+
+            <!-- Color Blocks -->
+            <div class="puzzle-card">
+                <div class="puzzle-title">Color Spectrum</div>
+                <div class="color-blocks" id="color-blocks"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    RGB values encode time
+                </div>
+            </div>
+
+            <!-- Morse Code (Medium+) -->
+            <div class="puzzle-card" id="morse-card" style="display: none;">
+                <div class="puzzle-title">Morse Code</div>
+                <div class="morse-display" id="morse-time"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    Dots and dashes
+                </div>
+            </div>
+
+            <!-- Roman Numerals (Hard+) -->
+            <div class="puzzle-card" id="roman-card" style="display: none;">
+                <div class="puzzle-title">Roman Numerals</div>
+                <div class="roman-display" id="roman-time"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    Ancient time keeping
+                </div>
+            </div>
+
+            <!-- Mathematical Expression (Expert) -->
+            <div class="puzzle-card" id="math-card" style="display: none;">
+                <div class="puzzle-title">Mathematical Time</div>
+                <div class="math-display" id="math-time"></div>
+                <div style="font-size: 0.9em; text-align: center; opacity: 0.7; margin-top: 10px;">
+                    Solve the equations
+                </div>
+            </div>
+        </div>
+
+        <!-- Decoder Section -->
+        <div class="decoder-section">
+            <div class="decoder-title">🔓 Time Decoder</div>
+            <div class="input-group">
+                <input type="number" class="time-input" id="hour-input" placeholder="HH" min="0" max="23">
+                <span>:</span>
+                <input type="number" class="time-input" id="minute-input" placeholder="MM" min="0" max="59">
+                <span>:</span>
+                <input type="number" class="time-input" id="second-input" placeholder="SS" min="0" max="59">
+                <button class="decode-btn" onclick="checkAnswer()">Decode Time</button>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="feedback" id="feedback"></div>
+        </div>
+
+        <!-- Hints Section -->
+        <div class="hints-section">
+            <button class="hints-toggle" onclick="toggleHints()">💡 Show Decoding Hints</button>
+            <div class="hints-content" id="hints-content">
+                <h3>Decoding Guide:</h3>
+                <p><strong>Binary:</strong> Each digit represents powers of 2. Read left to right: 32, 16, 8, 4, 2, 1</p>
+                <p><strong>Emoji:</strong> Each emoji represents a digit (0-9). Pattern changes daily!</p>
+                <p><strong>Colors:</strong> RGB values map to time digits. R=hour tens, G=hour ones, etc.</p>
+                <p><strong>Morse:</strong> Dots (.) and dashes (-). A=01, B=1000, C=1010, D=100, E=0, etc.</p>
+                <p><strong>Roman:</strong> I=1, V=5, X=10, L=50. Subtractive notation applies.</p>
+                <p><strong>Math:</strong> Solve simple equations where result equals time digits.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Notification -->
+    <div class="achievement" id="achievement"></div>
+
+    <script>
+        class PuzzleClock {
+            constructor() {
+                this.currentTime = new Date();
+                this.difficulty = 'easy';
+                this.stats = this.loadStats();
+                this.emojiMap = this.generateEmojiMap();
+                this.attempts = 0;
+                this.maxAttempts = 3;
+                this.startTime = Date.now();
+                
+                this.initializeEventListeners();
+                this.updateDisplay();
+                this.updateStats();
+                
+                // Update every second
+                setInterval(() => {
+                    this.currentTime = new Date();
+                    this.updateDisplay();
+                }, 1000);
+                
+                // Auto-save stats every 30 seconds
+                setInterval(() => this.saveStats(), 30000);
+            }
+
+            initializeEventListeners() {
+                // Difficulty selector
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.setDifficulty(e.target.dataset.level);
+                    });
+                });
+
+                // Enter key support
+                document.querySelectorAll('.time-input').forEach(input => {
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') this.checkAnswer();
+                    });
+                });
+
+                // Input validation
+                document.getElementById('hour-input').addEventListener('input', (e) => {
+                    if (e.target.value > 23) e.target.value = 23;
+                });
+                
+                document.getElementById('minute-input').addEventListener('input', (e) => {
+                    if (e.target.value > 59) e.target.value = 59;
+                });
+                
+                document.getElementById('second-input').addEventListener('input', (e) => {
+                    if (e.target.value > 59) e.target.value = 59;
+                });
+            }
+
+            setDifficulty(level) {
+                this.difficulty = level;
+                this.attempts = 0;
+                this.maxAttempts = level === 'expert' ? 1 : level === 'hard' ? 2 : 3;
+                
+                // Show/hide puzzle cards based on difficulty
+                document.getElementById('morse-card').style.display = 
+                    ['medium', 'hard', 'expert'].includes(level) ? 'block' : 'none';
+                document.getElementById('roman-card').style.display = 
+                    ['hard', 'expert'].includes(level) ? 'block' : 'none';
+                document.getElementById('math-card').style.display = 
+                    level === 'expert' ? 'block' : 'none';
+                
+                document.getElementById('difficulty').textContent = 
+                    level.charAt(0).toUpperCase() + level.slice(1);
+                
+                this.updateDisplay();
+                this.clearInputs();
+                document.getElementById('feedback').textContent = '';
+                document.getElementById('progress-fill').style.width = '0%';
+            }
+
+            generateEmojiMap() {
+                const emojis = ['🌙', '⭐', '🌟', '✨', '🔥', '💫', '🌈', '🎯', '🎪', '🎨'];
+                const map = {};
+                const shuffled = [...emojis].sort(() => Math.random() - 0.5);
+                for (let i = 0; i < 10; i++)  map[i] = shuffled[i];
+                return map;
+            }
+
+            updateDisplay() {
+                const h = this.currentTime.getHours();
+                const m = this.currentTime.getMinutes();
+                const s = this.currentTime.getSeconds();
+
+                this.updateBinaryDisplay(h, m, s);
+                this.updateEmojiDisplay(h, m, s);
+                this.updateColorDisplay(h, m, s);
+                
+                if (['medium', 'hard', 'expert'].includes(this.difficulty)) this.updateMorseDisplay(h, m, s);
+                if (['hard', 'expert'].includes(this.difficulty)) this.updateRomanDisplay(h, m, s);
+                if (this.difficulty === 'expert') this.updateMathDisplay(h, m, s);
+            }
+
+            updateBinaryDisplay(h, m, s) {
+                const toBinary = (num) => num.toString(2).padStart(6, '0');
+                const display = `${toBinary(h)} ${toBinary(m)} ${toBinary(s)}`;
+                document.getElementById('binary-time').textContent = display;
+            }
+
+            updateEmojiDisplay(h, m, s) {
+                const timeStr = `${h.toString().padStart(2, '0')}${m.toString().padStart(2, '0')}${s.toString().padStart(2, '0')}`;
+                let emojiTime = '';
+                
+                for (let digit of timeStr) emojiTime += this.emojiMap[parseInt(digit)] + ' ';
+                document.getElementById('emoji-time').textContent = emojiTime.trim();
+            }
+
+            updateColorDisplay(h, m, s) {
+                const container = document.getElementById('color-blocks');
+                container.innerHTML = '';
+                
+                const timeDigits = [
+                    Math.floor(h / 10), h % 10,
+                    Math.floor(m / 10), m % 10,
+                    Math.floor(s / 10), s % 10
+                ];
+                
+                const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', 
+                              '#FFA500', '#800080', '#FFC0CB', '#A52A2A'];
+                
+                timeDigits.forEach(digit => {
+                    const block = document.createElement('div');
+                    block.className = 'color-block';
+                    block.style.backgroundColor = colors[digit];
+                    block.title = `Digit: ${digit}`;
+                    container.appendChild(block);
+                });
+            }
+
+            updateMorseDisplay(h, m, s) {
+                const morseMap = {
+                    '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-',
+                    '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.'
+                };
+                
+                const timeStr = `${h.toString().padStart(2, '0')}${m.toString().padStart(2, '0')}${s.toString().padStart(2, '0')}`;
+                let morseTime = '';
+                
+                for (let digit of timeStr) morseTime += morseMap[digit] + '  ';
+                document.getElementById('morse-time').textContent = morseTime.trim();
+            }
+
+            updateRomanDisplay(h, m, s) {
+                const toRoman = (num) => {
+                    if (num === 0) return 'N'; // Nulla for zero
+                    const vals = [50, 40, 10, 9, 5, 4, 1];
+                    const syms = ['L', 'XL', 'X', 'IX', 'V', 'IV', 'I'];
+                    let roman = '';
+                    
+                    for (let i = 0; i < vals.length; i++) {
+                        while (num >= vals[i]) {
+                            roman += syms[i];
+                            num -= vals[i];
+                        }
+                    }
+                    return roman;
+                };
+                
+                const display = `${toRoman(h)} : ${toRoman(m)} : ${toRoman(s)}`;
+                document.getElementById('roman-time').textContent = display;
+            }
+
+            updateMathDisplay(h, m, s) {
+                const generateEquation = (target) => {
+                    if (target === 0) return '0';
+                    if (target <= 12) {
+                        const a = Math.floor(Math.random() * 10) + 1;
+                        const b = target - a;
+                        return b >= 0 ? `${a} + ${b}` : `${a} - ${Math.abs(b)}`;
+                    } 
+                    else {
+                        const factor = Math.floor(Math.random() * 9) + 2;
+                        const quotient = Math.floor(target / factor);
+                        const remainder = target % factor;
+                        return remainder === 0 ? `${factor} × ${quotient}` : `${factor} × ${quotient} + ${remainder}`;
+                    }
+                };
+                
+                const equations = [
+                    `H = ${generateEquation(h)}`,
+                    `M = ${generateEquation(m)}`,
+                    `S = ${generateEquation(s)}`
+                ];
+                
+                document.getElementById('math-time').innerHTML = equations.join('<br>');
+            }
+
+            checkAnswer() {
+                const inputH = parseInt(document.getElementById('hour-input').value) || 0;
+                const inputM = parseInt(document.getElementById('minute-input').value) || 0;
+                const inputS = parseInt(document.getElementById('second-input').value) || 0;
+                
+                const actualH = this.currentTime.getHours();
+                const actualM = this.currentTime.getMinutes();
+                const actualS = this.currentTime.getSeconds();
+                
+                this.attempts++;
+                
+                const isCorrect = inputH === actualH && inputM === actualM && inputS === actualS;
+                const feedback = document.getElementById('feedback');
+                
+                if (isCorrect)  this.handleSuccess();
+                else  this.handleError(actualH, actualM, actualS);
+
+                // Update progress bar
+                const progress = Math.min((this.attempts / this.maxAttempts) * 100, 100);
+                document.getElementById('progress-fill').style.width = `${progress}%`;
+            }
+
+            handleSuccess() {
+                const feedback = document.getElementById('feedback');
+                const timeTaken = Math.floor((Date.now() - this.startTime) / 1000);
+                
+                feedback.innerHTML = `🎉 Perfect! Decoded in ${this.attempts} attempt(s) and ${timeTaken}s`;
+                feedback.className = 'feedback success pulse';
+                
+                // Update stats
+                this.stats.streak++;
+                this.stats.totalSolved++;
+                this.stats.totalAttempts += this.attempts;
+                this.stats.bestTime = Math.min(this.stats.bestTime || Infinity, timeTaken);
+                
+                // Bonus points for difficulty and speed
+                let points = 10;
+                if (this.difficulty === 'medium') points = 20;
+                else if (this.difficulty === 'hard') points = 35;
+                else if (this.difficulty === 'expert') points = 50;
+                
+                if (this.attempts === 1) points *= 2; // Perfect bonus
+                if (timeTaken <= 30) points += 10; // Speed bonus
+                
+                this.stats.totalPoints += points;
+                
+                this.showAchievement(`+${points} points! Streak: ${this.stats.streak}`);
+                this.updateStats();
+                this.resetForNext();
+            }
+
+            handleError(actualH, actualM, actualS) {
+                const feedback = document.getElementById('feedback');
+                this.stats.totalAttempts++;
+                
+                if (this.attempts >= this.maxAttempts) {
+                    feedback.innerHTML = `❌ Time's up! Answer was ${actualH.toString().padStart(2, '0')}:${actualM.toString().padStart(2, '0')}:${actualS.toString().padStart(2, '0')}`;
+                    feedback.className = 'feedback error';
+                    this.stats.streak = 0;
+                    this.updateStats();
+                    this.resetForNext();
+                } 
+                else {
+                    const remaining = this.maxAttempts - this.attempts;
+                    feedback.innerHTML = `🔄 Try again! ${remaining} attempt(s) remaining`;
+                    feedback.className = 'feedback error';
+                }
+            }
+
+            resetForNext() {
+                setTimeout(() => {
+                    this.clearInputs();
+                    document.getElementById('feedback').textContent = '';
+                    document.getElementById('progress-fill').style.width = '0%';
+                    this.attempts = 0;
+                    this.startTime = Date.now();
+                    document.querySelector('.feedback').classList.remove('pulse');
+                }, 3000);
+            }
+
+            clearInputs() {
+                document.getElementById('hour-input').value = '';
+                document.getElementById('minute-input').value = '';
+                document.getElementById('second-input').value = '';
+            }
+
+            updateStats() {
+                document.getElementById('streak').textContent = this.stats.streak;
+                document.getElementById('totalSolved').textContent = this.stats.totalSolved;
+                
+                const accuracy = this.stats.totalAttempts > 0 
+                    ? Math.round((this.stats.totalSolved / this.stats.totalAttempts) * 100)
+                    : 0;
+                document.getElementById('accuracy').textContent = `${accuracy}%`;
+            }
+
+            showAchievement(message) {
+                const achievement = document.getElementById('achievement');
+                achievement.textContent = message;
+                achievement.classList.add('show');
+                
+                setTimeout(() => {
+                    achievement.classList.remove('show');
+                }, 3000);
+            }
+
+            loadStats() {
+                const defaultStats = {
+                    streak: 0,
+                    totalSolved: 0,
+                    totalAttempts: 0,
+                    totalPoints: 0,
+                    bestTime: null,
+                    achievements: []
+                };
+                
+                try {
+                    const saved = JSON.parse(localStorage.getItem('puzzleClockStats'));
+                    return saved || defaultStats;
+                } 
+                catch {
+                    return defaultStats;
+                }
+            }
+
+            saveStats() {
+                try {
+                    localStorage.setItem('puzzleClockStats', JSON.stringify(this.stats));
+                } 
+                catch (e) {
+                    console.log('Stats saved in memory only');
+                }
+            }
+            initParticleSystem() {
+            const particlesContainer = document.createElement('div');
+            particlesContainer.className = 'particles';
+            document.body.appendChild(particlesContainer);
+
+            // Create floating particles
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + 'vw';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+            initMouseTracking() {
+                document.addEventListener('mousemove', (e) => {
+                    const cards = document.querySelectorAll('.puzzle-card');
+                    cards.forEach(card => {
+                        const rect = card.getBoundingClientRect();
+                        const x = ((e.clientX - rect.left) / rect.width) * 100;
+                        const y = ((e.clientY - rect.top) / rect.height) * 100;
+                        card.style.setProperty('--mouse-x', x + '%');
+                        card.style.setProperty('--mouse-y', y + '%');
+                    });
+                });
+            }
+
+            initKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    // Alt + Enter to submit answer
+                    if (e.altKey && e.key === 'Enter') {
+                        e.preventDefault();
+                        this.checkAnswer();
+                    }
+                    
+                    // Alt + H to toggle hints
+                    if (e.altKey && e.key.toLowerCase() === 'h') {
+                        e.preventDefault();
+                        toggleHints();
+                    }
+                    
+                    // Alt + 1-4 for difficulty selection
+                    if (e.altKey && ['1', '2', '3', '4'].includes(e.key)) {
+                        e.preventDefault();
+                        const levels = ['easy', 'medium', 'hard', 'expert'];
+                        const level = levels[parseInt(e.key) - 1];
+                        this.setDifficulty(level);
+                        
+                        // Update UI
+                        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                            btn.classList.toggle('active', btn.dataset.level === level);
+                        });
+                    }
+                    
+                    // Escape to clear inputs
+                    if (e.key === 'Escape') {
+                        this.clearInputs();
+                        document.getElementById('feedback').textContent = '';
+                    }
+                });
+            }
+
+            initPerformanceMonitoring() {
+                this.performanceMetrics = {
+                    frameCount: 0,
+                    lastFrameTime: performance.now(),
+                    avgFrameTime: 0
+                };
+
+                const monitorPerformance = () => {
+                    const now = performance.now();
+                    this.performanceMetrics.frameCount++;
+                    
+                    if (now - this.performanceMetrics.lastFrameTime > 1000) {
+                        const fps = this.performanceMetrics.frameCount / 
+                            ((now - this.performanceMetrics.lastFrameTime) / 1000);
+                        
+                        // Optimize animations if FPS drops below 30
+                        if (fps < 30)  document.body.classList.add('reduced-motion');
+                        else  document.body.classList.remove('reduced-motion');
+                        this.performanceMetrics.frameCount = 0;
+                        this.performanceMetrics.lastFrameTime = now;
+                    }
+                    
+                    requestAnimationFrame(monitorPerformance);
+                };
+                
+                requestAnimationFrame(monitorPerformance);
+            }
+
+            // Enhanced notification system
+            showAchievement(message, type = 'success') {
+                this.notificationSystem.show(message, type);
+                
+                // Add confetti effect for major achievements
+                if (this.stats.streak > 0 && this.stats.streak % 5 === 0)  this.createConfettiEffect();
+            }
+
+            createConfettiEffect() {
+                const colors = ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b'];
+                const confettiContainer = document.createElement('div');
+                confettiContainer.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100vw;
+                    height: 100vh;
+                    pointer-events: none;
+                    z-index: 9999;
+                `;
+                document.body.appendChild(confettiContainer);
+
+                // Create confetti particles
+                for (let i = 0; i < 50; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.style.cssText = `
+                        position: absolute;
+                        width: 10px;
+                        height: 10px;
+                        background: ${colors[Math.floor(Math.random() * colors.length)]};
+                        left: ${Math.random() * 100}vw;
+                        top: -10px;
+                        transform: rotate(${Math.random() * 360}deg);
+                        animation: confettiFall ${2 + Math.random() * 3}s linear forwards;
+                    `;
+                    confettiContainer.appendChild(confetti);
+                }
+
+                // Add confetti animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes confettiFall {
+                        to {
+                            transform: translateY(100vh) rotate(${720 + Math.random() * 360}deg);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // Cleanup after animation
+                setTimeout(() => {
+                    confettiContainer.remove();
+                    style.remove();
+                }, 5000);
+            }
+
+            // Enhanced difficulty system with visual feedback
+            setDifficulty(level) {
+                this.difficulty = level;
+                this.attempts = 0;
+                this.maxAttempts = level === 'expert' ? 1 : level === 'hard' ? 2 : level === 'medium' ? 3 : 4;
+                
+                // Add difficulty-specific styling
+                document.body.className = `difficulty-${level}`;
+                
+                // Enhanced card visibility system
+                const cardVisibility = {
+                    easy: ['binary-card', 'emoji-card', 'color-card'],
+                    medium: ['binary-card', 'emoji-card', 'color-card', 'morse-card'],
+                    hard: ['binary-card', 'emoji-card', 'color-card', 'morse-card', 'roman-card'],
+                    expert: ['binary-card', 'emoji-card', 'color-card', 'morse-card', 'roman-card', 'math-card']
+                };
+
+                // Show/hide cards with smooth animations
+                document.querySelectorAll('.puzzle-card').forEach((card, index) => {
+                    const shouldShow = index < (cardVisibility[level]?.length || 3);
+                    
+                    if (shouldShow) {
+                        card.style.display = 'block';
+                        card.style.animation = `cardEntrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.1}s forwards`;
+                    } 
+                    else {
+                        card.style.animation = 'cardExit 0.4s ease forwards';
+                        setTimeout(() => {
+                            card.style.display = 'none';
+                        }, 400);
+                    }
+                });
+                
+                // Update difficulty indicator
+                document.getElementById('difficulty').textContent = 
+                    level.charAt(0).toUpperCase() + level.slice(1);
+                
+                // Add difficulty-specific effects
+                this.addDifficultyEffects(level);
+                
+                this.updateDisplay();
+                this.clearInputs();
+                document.getElementById('feedback').textContent = '';
+                document.getElementById('progress-fill').style.width = '0%';
+            }
+
+            addDifficultyEffects(level) {
+                // Remove existing effects
+                document.querySelectorAll('.puzzle-card').forEach(card => {
+                    card.classList.remove('glitch', 'floating', 'enhanced-glow');
+                });
+
+                // Add level-specific effects
+                switch (level) {
+                    case 'medium':
+                        document.querySelectorAll('.puzzle-card').forEach(card => {
+                            card.classList.add('floating');
+                        });
+                        break;
+                    case 'hard':
+                        document.querySelectorAll('.puzzle-card').forEach((card, index) => {
+                            if (index % 2 === 0) card.classList.add('enhanced-glow');
+                        });
+                        break;
+                    case 'expert':
+                        document.querySelectorAll('.puzzle-card').forEach((card, index) => {
+                            if (index > 2) card.classList.add('glitch');
+                        });
+                        break;
+                }
+            }
+
+            // Enhanced answer checking with detailed feedback
+            checkAnswer() {
+                const inputH = parseInt(document.getElementById('hour-input').value) || 0;
+                const inputM = parseInt(document.getElementById('minute-input').value) || 0;
+                const inputS = parseInt(document.getElementById('second-input').value) || 0;
+                
+                const actualH = this.currentTime.getHours();
+                const actualM = this.currentTime.getMinutes();
+                const actualS = this.currentTime.getSeconds();
+                
+                this.attempts++;
+                
+                const correctFields = [
+                    inputH === actualH ? 'hours' : null,
+                    inputM === actualM ? 'minutes' : null,
+                    inputS === actualS ? 'seconds' : null
+                ].filter(Boolean);
+                
+                const isCorrect = correctFields.length === 3;
+                
+                if (isCorrect)  this.handleSuccess(correctFields.length);
+                else  this.handleError(actualH, actualM, actualS, correctFields);
+                
+                // Enhanced progress bar with segments
+                const progress = (this.attempts / this.maxAttempts) * 100;
+                const progressFill = document.getElementById('progress-fill');
+                progressFill.style.width = `${Math.min(progress, 100)}%`;
+                
+                // Add progress text
+                const progressText = document.querySelector('.progress-text');
+                if (progressText) {
+                    progressText.textContent = `${this.attempts}/${this.maxAttempts}`;
+                }
+            }
+
+            handleSuccess(correctFields = 3) {
+                const feedback = document.getElementById('feedback');
+                const timeTaken = Math.floor((Date.now() - this.startTime) / 1000);
+                
+                // Enhanced success messages based on performance
+                let message = '🎉 Perfect decode!';
+                if (this.attempts === 1) message = '⚡ Flawless first try!';
+                if (timeTaken <= 15) message = '🚀 Lightning fast!';
+                if (this.difficulty === 'expert') message = '🏆 Master cryptographer!';
+                
+                feedback.innerHTML = `${message} <span class="status-indicator status-success"></span>`;
+                feedback.className = 'feedback success pulse';
+                
+                // Enhanced stats tracking
+                this.updateSuccessStats(timeTaken);
+                
+                // Show enhanced achievement notification
+                const points = this.calculatePoints(timeTaken);
+                this.showAchievement(`+${points} points! Streak: ${this.stats.streak}`, 'success');
+                
+                // Add success particle effect
+                this.createSuccessEffect();
+                
+                this.updateStats();
+                this.resetForNext();
+            }
+
+            createSuccessEffect() {
+                const successColors = ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0'];
+                const container = document.createElement('div');
+                container.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    pointer-events: none;
+                    z-index: 9999;
+                `;
+                document.body.appendChild(container);
+
+                // Create success burst
+                for (let i = 0; i < 12; i++) {
+                    const particle = document.createElement('div');
+                    const angle = (i / 12) * Math.PI * 2;
+                    const distance = 100 + Math.random() * 50;
+                    
+                    particle.style.cssText = `
+                        position: absolute;
+                        width: 8px;
+                        height: 8px;
+                        background: ${successColors[Math.floor(Math.random() * successColors.length)]};
+                        border-radius: 50%;
+                        animation: successBurst 1s ease-out forwards;
+                        --end-x: ${Math.cos(angle) * distance}px;
+                        --end-y: ${Math.sin(angle) * distance}px;
+                    `;
+                    container.appendChild(particle);
+                }
+
+                // Add success burst animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes successBurst {
+                        0% { 
+                            transform: translate(0, 0) scale(1); 
+                            opacity: 1; 
+                        }
+                        100% { 
+                            transform: translate(var(--end-x), var(--end-y)) scale(0); 
+                            opacity: 0; 
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+
+                // Cleanup
+                setTimeout(() => {
+                    container.remove();
+                    style.remove();
+                }, 1000);
+            }
+
+            calculatePoints(timeTaken) {
+                let basePoints = 10;
+                
+                // Difficulty multipliers
+                const difficultyMultipliers = {
+                    easy: 1,
+                    medium: 2,
+                    hard: 3.5,
+                    expert: 5
+                };
+                
+                basePoints *= difficultyMultipliers[this.difficulty] || 1;
+                
+                // Perfect attempt bonus
+                if (this.attempts === 1) basePoints *= 2;
+                
+                // Speed bonuses
+                if (timeTaken <= 10) basePoints += 20;
+                else if (timeTaken <= 20) basePoints += 15;
+                else if (timeTaken <= 30) basePoints += 10;
+                
+                // Streak bonus
+                if (this.stats.streak >= 5) basePoints += Math.floor(this.stats.streak / 5) * 5;
+                
+                return Math.floor(basePoints);
+            }
+
+            updateSuccessStats(timeTaken) {
+                this.stats.streak++;
+                this.stats.totalSolved++;
+                this.stats.totalAttempts += this.attempts;
+                this.stats.bestTime = Math.min(this.stats.bestTime || Infinity, timeTaken);
+                
+                const points = this.calculatePoints(timeTaken);
+                this.stats.totalPoints += points;
+                
+                // Track difficulty-specific stats
+                this.stats.difficultyStats = this.stats.difficultyStats || {};
+                this.stats.difficultyStats[this.difficulty] = this.stats.difficultyStats[this.difficulty] || { solved: 0, attempts: 0 };
+                this.stats.difficultyStats[this.difficulty].solved++;
+                this.stats.difficultyStats[this.difficulty].attempts += this.attempts;
+            }
+        }
+
+        // Enhanced notification system class
+        class NotificationSystem {
+            constructor() {
+                this.queue = [];
+                this.isShowing = false;
+                this.container = this.createContainer();
+            }
+
+            createContainer() {
+                const container = document.createElement('div');
+                container.id = 'notification-container';
+                container.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    z-index: 10000;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 10px;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(container);
+                return container;
+            }
+
+            show(message, type = 'info', duration = 4000) {
+                const notification = this.createNotification(message, type);
+                this.container.appendChild(notification);
+
+                // Trigger animation
+                requestAnimationFrame(() => {
+                    notification.classList.add('show');
+                });
+
+                // Auto-hide after duration
+                setTimeout(() => {
+                    this.hide(notification);
+                }, duration);
+
+                return notification;
+            }
+
+            createNotification(message, type) {
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                
+                const icons = {
+                    success: '✅',
+                    error: '❌', 
+                    warning: '⚠️',
+                    info: 'ℹ️'
+                };
+
+                notification.innerHTML = `
+                    <span style="margin-right: 8px; font-size: 1.2em;">${icons[type] || icons.info}</span>
+                    <span>${message}</span>
+                `;
+
+                return notification;
+            }
+
+            hide(notification) {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) notification.parentNode.removeChild(notification);
+                }, 300);
+            }
+        }
+
+        // Global functions for HTML onclick handlers
+        function checkAnswer() {
+            puzzleClock.checkAnswer();
+        }
+
+        function toggleHints() {
+            const content = document.getElementById('hints-content');
+            const button = document.querySelector('.hints-toggle');
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                button.innerHTML = '💡 Show Decoding Hints <span style="opacity:0.7">(Alt+H)</span>';
+            } 
+            else {
+                content.classList.add('show');
+                button.innerHTML = '🔒 Hide Hints <span style="opacity:0.7">(Alt+H)</span>';
+            }
+        }
+
+        // Enhanced puzzle clock initialization
+        let puzzleClock;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add loading screen
+            const loadingScreen = document.createElement('div');
+            loadingScreen.innerHTML = `
+                <div style="
+                    position: fixed;
+                    inset: 0;
+                    background: #0a0a0f;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 9999;
+                    flex-direction: column;
+                    gap: 20px;
+                ">
+                    <div style="
+                        width: 60px;
+                        height: 60px;
+                        border: 3px solid rgba(102, 126, 234, 0.3);
+                        border-top: 3px solid #667eea;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                    "></div>
+                    <div style="
+                        color: white;
+                        font-family: inherit;
+                        font-size: 1.2rem;
+                        opacity: 0.8;
+                    ">Initializing Puzzle Clock...</div>
+                </div>
+            `;
+            
+            const spinStyle = document.createElement('style');
+            spinStyle.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+            document.head.appendChild(spinStyle);
+            document.body.appendChild(loadingScreen);
+
+            // Initialize with delay for smooth loading
+            setTimeout(() => {
+                puzzleClock = new PuzzleClock();
+                
+                // Remove loading screen
+                loadingScreen.style.opacity = '0';
+                loadingScreen.style.transition = 'opacity 0.5s ease';
+                setTimeout(() => {
+                    loadingScreen.remove();
+                    spinStyle.remove();
+                    
+                    // Add entrance animations to main content
+                    document.querySelector('.container').style.animation = 'slideDown 0.8s ease-out';
+                }, 500);
+            }, 1000);
+
+            // Add service worker registration for PWA capabilities
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(() => {
+                    console.log('Service worker registration failed - running in online mode');
+                });
+            }
+
+            // Add enhanced keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Tab')  document.body.classList.add('using-keyboard');
+            });
+
+            document.addEventListener('mousedown', () => {
+                document.body.classList.remove('using-keyboard');
+            });
+
+            // Add window focus/blur handling for better UX
+            let isTabActive = true;
+            window.addEventListener('focus', () => {
+                isTabActive = true;
+                if (puzzleClock) puzzleClock.updateDisplay(); // Sync time when tab becomes active
+            });
+
+            window.addEventListener('blur', () => {
+                isTabActive = false;
+            });
+        });
+
+        // Enhanced performance monitoring and analytics
+        class Analytics {
+            constructor() {
+                this.events = [];
+                this.sessionStart = Date.now();
+            }
+
+            track(event, data = {}) {
+                this.events.push({
+                    event,
+                    data,
+                    timestamp: Date.now(),
+                    sessionTime: Date.now() - this.sessionStart
+                });
+
+                // Console logging for development
+                console.log(`📊 Analytics: ${event}`, data);
+            }
+
+            getSessionSummary() {
+                const sessionTime = Date.now() - this.sessionStart;
+                const interactions = this.events.length;
+                const uniqueEvents = new Set(this.events.map(e => e.event)).size;
+
+                return {
+                    sessionDuration: Math.round(sessionTime / 1000),
+                    totalInteractions: interactions,
+                    uniqueEventTypes: uniqueEvents,
+                    averageInteractionRate: Math.round((interactions / sessionTime) * 60000) // per minute
+                };
+            }
+        }
+
+        // Initialize analytics
+        const analytics = new Analytics();
+
+        // Memory cleanup and optimization
+        window.addEventListener('beforeunload', () => {
+            if (puzzleClock) {
+                puzzleClock.saveStats();
+                analytics.track('session_end', analytics.getSessionSummary());
+            }
+        });
+
+        // Add error boundary for production resilience
+        window.addEventListener('error', (e) => {
+            console.error('🚨 Runtime Error:', e.error);
+            analytics.track('error', {
+                message: e.message,
+                filename: e.filename,
+                lineno: e.lineno
+            });
+        });
+
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('🚨 Unhandled Promise Rejection:', e.reason);
+            analytics.track('promise_rejection', {
+                reason: e.reason?.toString()
+            });
+        });
+
+        // Performance monitoring
+        const performanceMetrics = {
+            startTime: performance.now(),
+            frameCount: 0,
+            lastFrameTime: performance.now(),
+            
+            logMetrics() {
+                const now = performance.now();
+                this.frameCount++;
+                if (now - this.lastFrameTime > 1000) {
+                    const fps = this.frameCount / ((now - this.lastFrameTime) / 1000);
+                    console.log(`FPS: ${fps.toFixed(2)}, Uptime: ${((now - this.startTime) / 1000).toFixed(1)}s`);
+                    this.frameCount = 0;
+                    this.lastFrameTime = now;
+                }
+            }
+        };
+
+        // Advanced features for production readiness
+        class AdvancedFeatures {
+            static initializeAccessibility() {
+                // Add ARIA labels and keyboard navigation
+                document.querySelectorAll('.puzzle-card').forEach((card, index) => {
+                    card.setAttribute('role', 'region');
+                    card.setAttribute('aria-labelledby', `puzzle-title-${index}`);
+                    card.querySelector('.puzzle-title').id = `puzzle-title-${index}`;
+                });
+                if (window.matchMedia && window.matchMedia('(prefers-contrast: high)').matches)  document.body.classList.add('high-contrast');// High contrast mode detection
+                if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) document.body.classList.add('reduced-motion'); // Reduced motion support
+            }
+
+            static initializeErrorHandling() {
+                window.addEventListener('error', (e) => {
+                    console.error('Runtime error:', e.error);
+                    this.showErrorNotification('An unexpected error occurred. Please refresh the page.');
+                });
+
+                window.addEventListener('unhandledrejection', (e) => {
+                    console.error('Unhandled promise rejection:', e.reason);
+                    this.showErrorNotification('A background error occurred.');
+                });
+            }
+
+            static showErrorNotification(message) {
+                const notification = document.createElement('div');
+                notification.className = 'error-notification';
+                notification.textContent = message;
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #f44336;
+                    color: white;
+                    padding: 15px 25px;
+                    border-radius: 10px;
+                    z-index: 1001;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                `;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 5000);
+            }
+
+            static initializeAnalytics() {
+                // Custom analytics for user engagement
+                const analytics = {
+                    sessions: parseInt(localStorage.getItem('puzzleClockSessions')) || 0,
+                    timeSpent: 0,
+                    interactions: 0,
+                    startTime: Date.now(),
+
+                    trackInteraction(action) {
+                        this.interactions++;
+                        console.log(`User interaction: ${action} (${this.interactions} total)`);
+                    },
+
+                    trackSession() {
+                        this.sessions++;
+                        localStorage.setItem('puzzleClockSessions', this.sessions);
+                        console.log(`Session ${this.sessions} started`);
+                    },
+
+                    endSession() {
+                        this.timeSpent = (Date.now() - this.startTime) / 1000;
+                        console.log(`Session ended: ${this.timeSpent.toFixed(1)}s, ${this.interactions} interactions`);
+                    }
+                };
+
+                analytics.trackSession();
+                document.addEventListener('click', (e) => {// Track user interactions
+                    if (e.target.matches('button, .puzzle-card, .time-input')) analytics.trackInteraction(e.target.className);
+                });
+
+                // Track session end
+                window.addEventListener('beforeunload', () => {
+                    analytics.endSession();
+                });
+                return analytics;
+            }
+
+            static initializeThemeSystem() {
+                const themes = {
+                    default: { name: 'Default', primary: '#4CAF50' },
+                    dark: { name: 'Dark Mode', primary: '#BB86FC' },
+                    ocean: { name: 'Ocean', primary: '#00BCD4' },
+                    sunset: { name: 'Sunset', primary: '#FF5722' }
+                };
+
+                const currentTheme = localStorage.getItem('puzzleClockTheme') || 'default';
+                this.applyTheme(currentTheme);
+
+                return themes;
+            }
+
+            static applyTheme(themeName) {
+                document.documentElement.setAttribute('data-theme', themeName);
+                localStorage.setItem('puzzleClockTheme', themeName);
+            }
+        }
+
+        // Initialize advanced features
+        document.addEventListener('DOMContentLoaded', () => {
+            AdvancedFeatures.initializeAccessibility();
+            AdvancedFeatures.initializeErrorHandling();
+            AdvancedFeatures.initializeAnalytics();
+            AdvancedFeatures.initializeThemeSystem();
+        });
+
+        // Service Worker for offline capability (production feature)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/puzzle-clock-sw.js').then(() => {
+                console.log('Service Worker registered for offline support');
+            }).catch(() => {
+                console.log('Service Worker registration failed - online only');
+            });
+        }
+
+        // Memory management and optimization
+        class PerformanceOptimizer {
+            static debounce(func, delay) {
+                let timeoutId;
+                return (...args) => {
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(() => func.apply(null, args), delay);
+                };
+            }
+
+            static throttle(func, limit) {
+                let inThrottle;
+                return function() {
+                    const args = arguments;
+                    const context = this;
+                    if (!inThrottle) {
+                        func.apply(context, args);
+                        inThrottle = true;
+                        setTimeout(() => inThrottle = false, limit);
+                    }
+                };
+            }
+
+            static optimizeAnimations() {
+                let animationFrame;// Use requestAnimationFrame for smooth animations
+                const animate = () => {
+                    performanceMetrics.logMetrics();
+                    animationFrame = requestAnimationFrame(animate);
+                };
+                animate();
+                return () => cancelAnimationFrame(animationFrame);
+            }
+        }
+
+        const stopAnimation = PerformanceOptimizer.optimizeAnimations();// Initialize performance optimizations
+
+        window.addEventListener('beforeunload', () => {// Memory cleanup on page unload
+            if (typeof stopAnimation === 'function') stopAnimation();
+            if (puzzleClock) puzzleClock.saveStats();
+        });
+        
+        this.initParticleSystem();// Add particle system
+        this.initMouseTracking();// Add mouse tracking for card hover effects
+        this.initKeyboardShortcuts();// Add keyboard shortcuts
+        this.initPerformanceMonitoring();// Add performance monitoring
+        this.notificationSystem = new NotificationSystem();// Add enhanced notifications
+    </script>
+</body>
+</html>
